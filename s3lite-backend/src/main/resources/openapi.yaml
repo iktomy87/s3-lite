@@ -1,0 +1,231 @@
+openapi: 3.0.3
+
+# ──────────────────────────────────────────────
+#  S3-Lite — OpenAPI Specification
+#  Fuente: docs/ERP.md v1.0.0
+# ──────────────────────────────────────────────
+
+info:
+  title: S3-Lite API
+  version: 1.0.0
+  description: |
+    API REST minimalista de almacenamiento de objetos orientada a optimizar
+    pipelines de CI/CD. Permite subir y descargar archivos organizados en
+    buckets lógicos, con registro automático de metadatos.
+
+    ### Principios de diseño
+    - **Solo Backend (headless):** Sin interfaz gráfica propia.
+    - **Streaming obligatorio:** Los archivos nunca se cargan completos en memoria.
+    - **Sin autenticación:** No implementa Spring Security, IAM ni firmas SigV4.
+  contact:
+    name: Equipo S3-Lite
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Entorno de desarrollo local
+
+tags:
+  - name: Storage
+    description: Operaciones de almacenamiento y recuperación de objetos
+
+paths:
+  /api/storage/{bucketName}/{fileName}:
+
+    # ── RF-01: Subida / Sobrescritura de Objeto ──
+    put:
+      tags:
+        - Storage
+      operationId: uploadObject
+      summary: Subir o sobrescribir un objeto
+      description: |
+        Recibe el flujo binario bruto del archivo en el cuerpo de la petición
+        y lo persiste en el bucket indicado. Si el bucket no existe, se crea
+        lógicamente de forma automática. Si el archivo ya existe, se sobrescribe.
+
+        El tipo MIME se extrae de la cabecera `Content-Type` de la petición.
+        Los metadatos del objeto se registran en la base de datos.
+      parameters:
+        - $ref: '#/components/parameters/BucketName'
+        - $ref: '#/components/parameters/FileName'
+      requestBody:
+        description: Flujo binario bruto del archivo a almacenar.
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Objeto creado/sobrescrito exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectMetadata'
+              example:
+                id: "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                bucketName: "ci-artifacts"
+                fileName: "report.xml"
+                sizeInBytes: 204800
+                mimeType: "application/xml"
+                createdAt: "2026-05-24T19:30:00Z"
+        '500':
+          description: Error interno del servidor al procesar el objeto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    # ── RF-02: Descarga de Objeto ──
+    get:
+      tags:
+        - Storage
+      operationId: downloadObject
+      summary: Descargar un objeto
+      description: |
+        Busca el archivo en la base de datos de metadatos por bucket y nombre.
+        Si existe, transmite el archivo físico directamente al cliente como
+        stream binario, con las cabeceras `Content-Type` y `Content-Length`
+        correctas.
+      parameters:
+        - $ref: '#/components/parameters/BucketName'
+        - $ref: '#/components/parameters/FileName'
+      responses:
+        '200':
+          description: Contenido del objeto transmitido exitosamente.
+          headers:
+            Content-Type:
+              description: Tipo MIME del objeto almacenado.
+              schema:
+                type: string
+                example: application/xml
+            Content-Length:
+              description: Tamaño del objeto en bytes.
+              schema:
+                type: integer
+                format: int64
+                example: 204800
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: El objeto no existe en el bucket especificado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Object 'report.xml' not found in bucket 'ci-artifacts'"
+                timestamp: "2026-05-24T19:35:00Z"
+        '500':
+          description: Error interno del servidor al recuperar el objeto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+
+  # ── Parámetros reutilizables ──
+  parameters:
+    BucketName:
+      name: bucketName
+      in: path
+      required: true
+      description: |
+        Nombre del bucket (partición lógica). Si no existe al momento de
+        la subida, se crea automáticamente.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      example: ci-artifacts
+
+    FileName:
+      name: fileName
+      in: path
+      required: true
+      description: Nombre del archivo dentro del bucket.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      example: report.xml
+
+  # ── Esquemas ──
+  schemas:
+
+    # RF-03: Modelo de Metadatos
+    ObjectMetadata:
+      type: object
+      description: |
+        Metadatos del objeto almacenado. Se genera automáticamente al subir
+        un archivo y se persiste en la base de datos relacional.
+      required:
+        - id
+        - bucketName
+        - fileName
+        - sizeInBytes
+        - mimeType
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único generado automáticamente.
+          example: "a3bb189e-8bf9-3888-9912-ace4e6543002"
+        bucketName:
+          type: string
+          maxLength: 255
+          description: Nombre del bucket (partición lógica).
+          example: "ci-artifacts"
+        fileName:
+          type: string
+          maxLength: 255
+          description: Nombre original del archivo.
+          example: "report.xml"
+        sizeInBytes:
+          type: integer
+          format: int64
+          description: Tamaño del archivo en bytes.
+          example: 204800
+        mimeType:
+          type: string
+          maxLength: 128
+          description: Tipo MIME detectado desde la cabecera Content-Type.
+          example: "application/xml"
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación en UTC (ISO 8601).
+          example: "2026-05-24T19:30:00Z"
+
+    # Respuesta de error genérica
+    ErrorResponse:
+      type: object
+      description: Estructura estándar para respuestas de error.
+      properties:
+        status:
+          type: integer
+          description: Código de estado HTTP.
+          example: 404
+        error:
+          type: string
+          description: Nombre corto del error HTTP.
+          example: "Not Found"
+        message:
+          type: string
+          description: Descripción detallada del error.
+          example: "Object 'report.xml' not found in bucket 'ci-artifacts'"
+        timestamp:
+          type: string
+          format: date-time
+          description: Momento en que ocurrió el error (UTC).
+          example: "2026-05-24T19:35:00Z"
