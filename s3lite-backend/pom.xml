@@ -149,6 +149,7 @@
 								<interfaceOnly>true</interfaceOnly>
 								<useSpringBoot3>true</useSpringBoot3>
 								<useSwaggerUI>false</useSwaggerUI>
+								<useTags>true</useTags>
 							</configOptions>
 						</configuration>
 					</execution>

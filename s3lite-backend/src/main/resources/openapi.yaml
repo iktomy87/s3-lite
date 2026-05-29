@@ -2,23 +2,25 @@ openapi: 3.0.3
 
 # ──────────────────────────────────────────────
 #  S3-Lite — OpenAPI Specification
-#  Fuente: docs/ERP.md v1.0.0
+#  Fuente: docs/ERP v2.0.0.md
 # ──────────────────────────────────────────────
 
 info:
   title: S3-Lite API
-  version: 1.0.0
+  version: 2.0.0
   description: |
-    API REST minimalista de almacenamiento de objetos orientada a optimizar
-    pipelines de CI/CD. Permite subir y descargar archivos organizados en
-    buckets lógicos, con registro automático de metadatos.
+    API REST de almacenamiento de objetos que simula las capacidades básicas
+    de Amazon S3, orientada a optimizar pipelines de CI/CD.
+
+    Permite crear buckets, subir y descargar objetos con **versionado automático**,
+    eliminar objetos (soft delete), listar objetos por prefijo y gestionar
+    metadata definida por el usuario mediante headers `x-amz-meta-*`.
 
     ### Principios de diseño
-    - **Solo Backend (headless):** Sin interfaz gráfica propia.
     - **Streaming obligatorio:** Los archivos nunca se cargan completos en memoria.
-    - **Sin autenticación:** No implementa Spring Security, IAM ni firmas SigV4.
-  contact:
-    name: Equipo S3-Lite
+    - **Versionado:** Subir un objeto con la misma key genera una nueva versión; nunca sobrescritura.
+    - **IAM simplificado:** Autenticación HTTP Basic + autorización `read`/`write` por bucket.
+    - **API-First:** Generada a partir de este contrato con `openapi-generator-maven-plugin`.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -27,31 +29,176 @@ servers:
   - url: http://localhost:8080
     description: Entorno de desarrollo local
 
+# ── Seguridad global (HTTP Basic — RF-08) ──
+security:
+  - basicAuth: []
+
 tags:
+  - name: Buckets
+    description: Gestión de buckets (contenedores lógicos)
   - name: Storage
-    description: Operaciones de almacenamiento y recuperación de objetos
+    description: Operaciones de almacenamiento, recuperación y eliminación de objetos
 
 paths:
-  /api/storage/{bucketName}/{fileName}:
 
-    # ── RF-01: Subida / Sobrescritura de Objeto ──
+  # ══════════════════════════════════════════════
+  #  BUCKETS
+  # ══════════════════════════════════════════════
+
+  /api/buckets/{bucketName}:
+
+    # ── RF-01: Creación de Bucket ──
+    put:
+      tags:
+        - Buckets
+      operationId: createBucket
+      summary: Crear un bucket
+      description: |
+        Crea un bucket con el nombre indicado. El nombre debe ser **globalmente
+        único** entre todos los usuarios. El bucket debe existir antes de poder
+        subir objetos a él.
+      parameters:
+        - $ref: '#/components/parameters/BucketName'
+      responses:
+        '201':
+          description: Bucket creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BucketResponse'
+              example:
+                id: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                name: "ci-artifacts"
+                ownerId: "550e8400-e29b-41d4-a716-446655440000"
+                createdAt: "2026-05-29T02:00:00Z"
+        '400':
+          description: Nombre de bucket inválido (vacío, demasiado largo, caracteres no permitidos).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 400
+                error: "Bad Request"
+                message: "Bucket name must be between 1 and 255 characters."
+                timestamp: "2026-05-29T02:00:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Ya existe un bucket con ese nombre.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 409
+                error: "Conflict"
+                message: "Bucket 'ci-artifacts' already exists."
+                timestamp: "2026-05-29T02:00:00Z"
+
+  /api/buckets/{bucketName}/objects:
+
+    # ── RF-05: Listado de Objetos por Prefijo ──
+    get:
+      tags:
+        - Buckets
+      operationId: listObjects
+      summary: Listar objetos de un bucket
+      description: |
+        Lista los objetos almacenados en el bucket. Por defecto retorna únicamente
+        la **versión más reciente** de cada key (aquellas con `isLatest = true`
+        y no eliminadas). Si se indica `allVersions=true`, retorna todas las versiones.
+
+        Se puede filtrar por prefijo de key con el parámetro `prefix`.
+      parameters:
+        - $ref: '#/components/parameters/BucketName'
+        - name: prefix
+          in: query
+          required: false
+          description: |
+            Prefijo de la key por el que filtrar. Sin este parámetro se listan
+            todos los objetos del bucket.
+          schema:
+            type: string
+            example: "fotos/2024/"
+        - name: allVersions
+          in: query
+          required: false
+          description: |
+            Si es `true`, incluye todas las versiones de cada key (no solo la
+            más reciente). Por defecto es `false`.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Lista de objetos obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectListResponse'
+              example:
+                bucketName: "ci-artifacts"
+                objects:
+                  - key: "fotos/2024/img.jpg"
+                    versionId: 2
+                    sizeInBytes: 204800
+                    mimeType: "image/jpeg"
+                    isLatest: true
+                    deleted: false
+                    createdAt: "2026-05-29T02:10:00Z"
+                  - key: "reports/report.xml"
+                    versionId: 1
+                    sizeInBytes: 10240
+                    mimeType: "application/xml"
+                    isLatest: true
+                    deleted: false
+                    createdAt: "2026-05-29T01:00:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: El bucket especificado no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Bucket 'ci-artifacts' not found."
+                timestamp: "2026-05-29T02:00:00Z"
+
+  # ══════════════════════════════════════════════
+  #  STORAGE (Objetos)
+  # ══════════════════════════════════════════════
+
+  /api/storage/{bucketName}/{objectKey}:
+
+    # ── RF-02 + RF-06: Carga de Objeto (con versionado) ──
     put:
       tags:
         - Storage
       operationId: uploadObject
-      summary: Subir o sobrescribir un objeto
+      summary: Subir un objeto (crea nueva versión si la key ya existe)
       description: |
-        Recibe el flujo binario bruto del archivo en el cuerpo de la petición
-        y lo persiste en el bucket indicado. Si el bucket no existe, se crea
-        lógicamente de forma automática. Si el archivo ya existe, se sobrescribe.
+        Persiste el flujo binario del objeto en el bucket indicado bajo la key
+        especificada. La key puede tener formato tipo path (ej. `fotos/2024/img.jpg`).
 
-        El tipo MIME se extrae de la cabecera `Content-Type` de la petición.
-        Los metadatos del objeto se registran en la base de datos.
+        Si ya existe un objeto con la misma key en el mismo bucket, **no se
+        sobrescribe**: se crea una nueva versión con `versionId` incremental.
+        El header `X-Version-Id` de la respuesta indica el número de versión asignado.
+
+        La metadata definida por el usuario se envía como headers con el
+        prefijo `x-amz-meta-` (ej. `x-amz-meta-author: John`).
       parameters:
         - $ref: '#/components/parameters/BucketName'
-        - $ref: '#/components/parameters/FileName'
+        - $ref: '#/components/parameters/ObjectKey'
       requestBody:
-        description: Flujo binario bruto del archivo a almacenar.
+        description: Flujo binario bruto del objeto a almacenar.
         required: true
         content:
           application/octet-stream:
@@ -60,39 +207,68 @@ paths:
               format: binary
       responses:
         '201':
-          description: Objeto creado/sobrescrito exitosamente.
+          description: Objeto creado exitosamente. Se retorna el número de versión asignado.
+          headers:
+            X-Version-Id:
+              description: Número de versión asignado al objeto subido.
+              schema:
+                type: integer
+                format: int64
+                example: 1
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ObjectMetadata'
               example:
                 id: "a3bb189e-8bf9-3888-9912-ace4e6543002"
-                bucketName: "ci-artifacts"
-                fileName: "report.xml"
+                bucketId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                key: "fotos/2024/img.jpg"
+                versionId: 1
                 sizeInBytes: 204800
-                mimeType: "application/xml"
-                createdAt: "2026-05-24T19:30:00Z"
-        '500':
-          description: Error interno del servidor al procesar el objeto.
+                mimeType: "image/jpeg"
+                isLatest: true
+                deleted: false
+                createdAt: "2026-05-29T02:10:00Z"
+        '400':
+          description: Petición inválida (key vacía, Content-Type ausente, etc.).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: El bucket especificado no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Bucket 'ci-artifacts' not found."
+                timestamp: "2026-05-29T02:10:00Z"
 
-    # ── RF-02: Descarga de Objeto ──
+    # ── RF-03 + RF-06: Descarga de Objeto (con versionado) ──
     get:
       tags:
         - Storage
       operationId: downloadObject
-      summary: Descargar un objeto
+      summary: Descargar un objeto (versión específica o la más reciente)
       description: |
-        Busca el archivo en la base de datos de metadatos por bucket y nombre.
-        Si existe, transmite el archivo físico directamente al cliente como
-        stream binario, con las cabeceras `Content-Type` y `Content-Length`
-        correctas.
+        Transmite el payload binario del objeto al cliente como stream.
+
+        Sin `versionId` retorna la **versión más reciente** (`isLatest = true`).
+        Con `?versionId=N` retorna la versión específica indicada.
+
+        La respuesta incluye las cabeceras `Content-Type` y `Content-Length`
+        correctas, así como los headers `x-amz-meta-*` con la metadata del usuario.
       parameters:
         - $ref: '#/components/parameters/BucketName'
-        - $ref: '#/components/parameters/FileName'
+        - $ref: '#/components/parameters/ObjectKey'
+        - $ref: '#/components/parameters/VersionId'
       responses:
         '200':
           description: Contenido del objeto transmitido exitosamente.
@@ -101,20 +277,30 @@ paths:
               description: Tipo MIME del objeto almacenado.
               schema:
                 type: string
-                example: application/xml
+                example: "image/jpeg"
             Content-Length:
               description: Tamaño del objeto en bytes.
               schema:
                 type: integer
                 format: int64
                 example: 204800
+            X-Version-Id:
+              description: Número de versión del objeto retornado.
+              schema:
+                type: integer
+                format: int64
+                example: 2
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: El objeto no existe en el bucket especificado.
+          description: El objeto (o la versión indicada) no existe en el bucket.
           content:
             application/json:
               schema:
@@ -122,16 +308,83 @@ paths:
               example:
                 status: 404
                 error: "Not Found"
-                message: "Object 'report.xml' not found in bucket 'ci-artifacts'"
-                timestamp: "2026-05-24T19:35:00Z"
-        '500':
-          description: Error interno del servidor al recuperar el objeto.
+                message: "Object 'fotos/2024/img.jpg' (versionId=3) not found in bucket 'ci-artifacts'."
+                timestamp: "2026-05-29T02:15:00Z"
+
+    # ── RF-04: Eliminación de Objeto ──
+    delete:
+      tags:
+        - Storage
+      operationId: deleteObject
+      summary: Eliminar un objeto o una versión específica
+      description: |
+        Elimina el objeto identificado por `bucketName` + `objectKey`.
+
+        - **Sin `versionId`:** aplica *soft delete* a la versión más reciente
+          (`isLatest = true`), marcándola como `deleted = true`.
+        - **Con `?versionId=N`:** elimina (soft delete) la versión específica indicada.
+
+        El payload en disco y los metadatos correspondientes se marcan como
+        eliminados. No se recuperarán en operaciones de listado o descarga
+        normales.
+      parameters:
+        - $ref: '#/components/parameters/BucketName'
+        - $ref: '#/components/parameters/ObjectKey'
+        - $ref: '#/components/parameters/VersionId'
+      responses:
+        '204':
+          description: Objeto eliminado exitosamente. Sin cuerpo de respuesta.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: El objeto (o la versión indicada) no existe en el bucket.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Object 'fotos/2024/img.jpg' not found in bucket 'ci-artifacts'."
+                timestamp: "2026-05-29T02:20:00Z"
 
 components:
+
+  # ── Esquemas de seguridad ──
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Autenticación HTTP Basic. El usuario y contraseña deben corresponder
+        a un `User` registrado en el sistema (RF-08).
+
+  # ── Respuestas reutilizables ──
+  responses:
+    Unauthorized:
+      description: Credenciales ausentes o inválidas.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 401
+            error: "Unauthorized"
+            message: "Full authentication is required to access this resource."
+            timestamp: "2026-05-29T02:00:00Z"
+    Forbidden:
+      description: El usuario autenticado no tiene permiso para realizar la operación.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 403
+            error: "Forbidden"
+            message: "User does not have 'write' permission on bucket 'ci-artifacts'."
+            timestamp: "2026-05-29T02:00:00Z"
 
   # ── Parámetros reutilizables ──
   parameters:
@@ -140,72 +393,206 @@ components:
       in: path
       required: true
       description: |
-        Nombre del bucket (partición lógica). Si no existe al momento de
-        la subida, se crea automáticamente.
+        Nombre globalmente único del bucket (contenedor lógico de objetos).
+        Debe haberse creado previamente con `PUT /api/buckets/{bucketName}`
+        antes de poder operar sobre sus objetos.
       schema:
         type: string
         minLength: 1
         maxLength: 255
       example: ci-artifacts
 
-    FileName:
-      name: fileName
+    ObjectKey:
+      name: objectKey
       in: path
       required: true
-      description: Nombre del archivo dentro del bucket.
+      description: |
+        Identificador del objeto dentro del bucket. Puede tener formato de
+        ruta (ej. `fotos/2024/img.jpg`). Junto con `bucketId` y `versionId`
+        forma una clave compuesta única.
       schema:
         type: string
         minLength: 1
-        maxLength: 255
-      example: report.xml
+        maxLength: 1024
+      example: fotos/2024/img.jpg
+
+    VersionId:
+      name: versionId
+      in: query
+      required: false
+      description: |
+        Número de versión del objeto. Si se omite, la operación se aplica
+        sobre la versión más reciente (`isLatest = true`).
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 2
 
   # ── Esquemas ──
   schemas:
 
-    # RF-03: Modelo de Metadatos
-    ObjectMetadata:
+    # RF-01: Respuesta de creación de bucket
+    BucketResponse:
       type: object
-      description: |
-        Metadatos del objeto almacenado. Se genera automáticamente al subir
-        un archivo y se persiste en la base de datos relacional.
+      description: Metadatos del bucket creado.
       required:
         - id
-        - bucketName
-        - fileName
-        - sizeInBytes
-        - mimeType
+        - name
+        - ownerId
         - createdAt
       properties:
         id:
           type: string
           format: uuid
-          description: Identificador único generado automáticamente.
-          example: "a3bb189e-8bf9-3888-9912-ace4e6543002"
-        bucketName:
+          description: Identificador único del bucket (PK).
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        name:
           type: string
           maxLength: 255
-          description: Nombre del bucket (partición lógica).
+          description: Nombre globalmente único del bucket.
           example: "ci-artifacts"
-        fileName:
+        ownerId:
           type: string
-          maxLength: 255
-          description: Nombre original del archivo.
-          example: "report.xml"
-        sizeInBytes:
-          type: integer
-          format: int64
-          description: Tamaño del archivo en bytes.
-          example: 204800
-        mimeType:
-          type: string
-          maxLength: 128
-          description: Tipo MIME detectado desde la cabecera Content-Type.
-          example: "application/xml"
+          format: uuid
+          description: UUID del usuario propietario del bucket (FK → users.id).
+          example: "550e8400-e29b-41d4-a716-446655440000"
         createdAt:
           type: string
           format: date-time
           description: Fecha y hora de creación en UTC (ISO 8601).
-          example: "2026-05-24T19:30:00Z"
+          example: "2026-05-29T02:00:00Z"
+
+    # RF-02 / RF-03: Metadatos del sistema de un objeto/versión
+    ObjectMetadata:
+      type: object
+      description: |
+        Metadatos del sistema de un objeto almacenado (una versión concreta).
+        Se genera automáticamente al subir un objeto. Los metadatos de usuario
+        (`x-amz-meta-*`) se devuelven como headers de la respuesta de descarga,
+        no en este esquema.
+      required:
+        - id
+        - bucketId
+        - key
+        - versionId
+        - sizeInBytes
+        - mimeType
+        - isLatest
+        - deleted
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único de esta versión del objeto (PK).
+          example: "a3bb189e-8bf9-3888-9912-ace4e6543002"
+        bucketId:
+          type: string
+          format: uuid
+          description: UUID del bucket al que pertenece el objeto (FK → buckets.id).
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        key:
+          type: string
+          maxLength: 1024
+          description: Identificador del objeto con formato path dentro del bucket.
+          example: "fotos/2024/img.jpg"
+        versionId:
+          type: integer
+          format: int64
+          description: Número de versión auto-incremental por (bucketId, key). Comienza en 1.
+          example: 1
+        sizeInBytes:
+          type: integer
+          format: int64
+          description: Tamaño del payload en bytes.
+          example: 204800
+        mimeType:
+          type: string
+          maxLength: 128
+          description: Tipo MIME detectado desde la cabecera Content-Type de la petición.
+          example: "image/jpeg"
+        isLatest:
+          type: boolean
+          description: "`true` si es la versión más reciente de esta key en el bucket."
+          example: true
+        deleted:
+          type: boolean
+          description: Marca lógica de eliminación (soft delete).
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación en UTC (ISO 8601).
+          example: "2026-05-29T02:10:00Z"
+
+    # RF-05: Resumen de objeto para listado
+    ObjectSummary:
+      type: object
+      description: |
+        Resumen de un objeto (o versión) para el endpoint de listado.
+        Incluye los campos más relevantes para identificar y filtrar objetos.
+      required:
+        - key
+        - versionId
+        - sizeInBytes
+        - mimeType
+        - isLatest
+        - deleted
+        - createdAt
+      properties:
+        key:
+          type: string
+          maxLength: 1024
+          description: Identificador del objeto con formato path dentro del bucket.
+          example: "fotos/2024/img.jpg"
+        versionId:
+          type: integer
+          format: int64
+          description: Número de versión.
+          example: 2
+        sizeInBytes:
+          type: integer
+          format: int64
+          description: Tamaño del payload en bytes.
+          example: 204800
+        mimeType:
+          type: string
+          maxLength: 128
+          description: Tipo MIME del objeto.
+          example: "image/jpeg"
+        isLatest:
+          type: boolean
+          description: "`true` si es la versión más reciente de esta key."
+          example: true
+        deleted:
+          type: boolean
+          description: Indica si el objeto fue marcado como eliminado.
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación en UTC (ISO 8601).
+          example: "2026-05-29T02:10:00Z"
+
+    # RF-05: Respuesta de listado de objetos
+    ObjectListResponse:
+      type: object
+      description: Respuesta del endpoint de listado de objetos de un bucket.
+      required:
+        - bucketName
+        - objects
+      properties:
+        bucketName:
+          type: string
+          maxLength: 255
+          description: Nombre del bucket consultado.
+          example: "ci-artifacts"
+        objects:
+          type: array
+          description: Lista de objetos (o versiones) que cumplen los filtros aplicados.
+          items:
+            $ref: '#/components/schemas/ObjectSummary'
 
     # Respuesta de error genérica
     ErrorResponse:
@@ -223,9 +610,9 @@ components:
         message:
           type: string
           description: Descripción detallada del error.
-          example: "Object 'report.xml' not found in bucket 'ci-artifacts'"
+          example: "Object 'fotos/2024/img.jpg' not found in bucket 'ci-artifacts'."
         timestamp:
           type: string
           format: date-time
           description: Momento en que ocurrió el error (UTC).
-          example: "2026-05-24T19:35:00Z"
+          example: "2026-05-29T02:15:00Z"
