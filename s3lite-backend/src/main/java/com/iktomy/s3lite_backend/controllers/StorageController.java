@@ -1,6 +1,10 @@
 package com.iktomy.s3lite_backend.controllers;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -13,7 +17,6 @@ import com.iktomy.s3lite_backend.service.MetadataService;
 
 @RestController
 public class StorageController implements StorageApi {
-    // TO DO: crear los servicios para resolver los errores de importancion
     private final MetadataService metadataService;
     private final DataService dataService;
     private final AuthService authService;
@@ -40,8 +43,25 @@ public class StorageController implements StorageApi {
     }
 
     @Override
-    public ResponseEntity<StreamingResponseBody> uploadObject(String bucketName, String objectKey, Long versionId) {
+    public ResponseEntity<ObjectMetadata> uploadObject(String bucketName, String objectKey,
+            org.springframework.core.io.Resource body) {
+        try {
+            InputStream fileStream = body.getInputStream();
+            long fileSize = body.contentLength();
+            String mimeType = "application/octet-stream"; // Simplificado por ahora
 
+            ObjectMetadata nuevaVersion = metadataService.registerNewVersion(bucketName, objectKey, fileSize, mimeType);
+
+            dataService.store(bucketName, objectKey, nuevaVersion.getVersionId(), fileStream);
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .header("X-Version-Id", String.valueOf(nuevaVersion.getVersionId()))
+                    .body(nuevaVersion);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @Override
