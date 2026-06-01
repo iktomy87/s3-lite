@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.iktomy.s3lite_backend.model.ObjectVersion;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,28 @@ public interface ObjectVersionRepository extends JpaRepository<ObjectVersion, UU
         Optional<ObjectVersion> findLatestActive(
                         @Param("bucketName") String bucketName,
                         @Param("objectKey") String objectKey);
+
+        @Query("""
+                        SELECT ov FROM ObjectVersion ov
+                        WHERE ov.bucket.name = :bucketName
+                        AND ov.isLatest      = true
+                        AND ov.deleted       = false
+                        AND (:prefix IS NULL OR ov.key LIKE :prefix%)
+                        ORDER BY ov.key ASC
+                        """)
+        List<ObjectVersion> listLatestActive(
+                        @Param("bucketName") String bucketName,
+                        @Param("prefix") String prefix);
+
+        @Query("""
+                        SELECT ov FROM ObjectVersion ov
+                        WHERE ov.bucket.name = :bucketName
+                        AND (:prefix IS NULL OR ov.key LIKE :prefix%)
+                        ORDER BY ov.key ASC, ov.versionId ASC
+                        """)
+        List<ObjectVersion> listAllVersions(
+                        @Param("bucketName") String bucketName,
+                        @Param("prefix") String prefix);
 
         @Query("""
                         SELECT ov FROM ObjectVersion ov
