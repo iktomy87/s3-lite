@@ -20,10 +20,3 @@ spring:
 s3lite:
   storage:
     root: ${STORAGE_ROOT:./s3-data}
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui/index.html
-  api-docs:
-    path: /v3/api-docs
-
