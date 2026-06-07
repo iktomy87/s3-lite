@@ -1,0 +1,284 @@
+/* Reseteo básico y variables */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Public Sans', sans-serif;
+}
+
+body {
+    background-color: #F5F5F9;
+    /* Color de fondo lila/gris claro */
+    color: #566a7f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Contenedor principal de dos columnas */
+.container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* --- Panel Izquierdo --- */
+.left-panel {
+    flex: 1;
+    padding-right: 50px;
+}
+
+.left-panel h1 {
+    font-size: 3.5rem;
+    color: #2b2c40;
+    line-height: 1.2;
+    margin-bottom: 80px;
+}
+
+.brand-logo-bottom {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.theme {
+    color: #5db7f7;
+}
+
+.selection {
+    color: #2b2c40;
+}
+
+/* --- Panel Derecho (Tarjeta) --- */
+.right-panel {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.login-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Logo de la tarjeta */
+.card-logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.logo-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #696cff;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #566a7f;
+}
+
+/* Textos de bienvenida */
+.login-card h2 {
+    font-size: 1.5rem;
+    color: #566a7f;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: #697a8d;
+    margin-bottom: 25px;
+}
+
+/* Formulario y Controles */
+.input-group {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #566a7f;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d9dee3;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #696cff;
+}
+
+.password-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forgot-link,
+.register-text a {
+    font-size: 0.85rem;
+    color: #696cff;
+    text-decoration: none;
+}
+
+.forgot-link:hover,
+.register-text a:hover {
+    text-decoration: underline;
+}
+
+.input-icon-wrapper {
+    position: relative;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #a1acb8;
+}
+
+/* Checkbox */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.checkbox-group input {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    text-transform: none;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+/* Botón Principal */
+.btn-primary {
+    width: 100%;
+    padding: 10px;
+    background-color: #696cff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+}
+
+.btn-primary:hover {
+    background-color: #5f61e6;
+}
+
+/* Texto de registro */
+.register-text {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #697a8d;
+    margin-bottom: 20px;
+}
+
+/* Separador OR */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #a1acb8;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #d9dee3;
+}
+
+.divider span {
+    padding: 0 10px;
+}
+
+/* Botones Sociales */
+.social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-social {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.fb {
+    background-color: #e1e8fa;
+    color: #3b5998;
+}
+
+.gp {
+    background-color: #fce4e4;
+    color: #db4437;
+}
+
+.tw {
+    background-color: #e2f4fb;
+    color: #1da1f2;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .left-panel {
+        display: none;
+        /* Oculta el texto grande en móviles para centrar el login */
+    }
+
+    .right-panel {
+        justify-content: center;
+    }
+}
