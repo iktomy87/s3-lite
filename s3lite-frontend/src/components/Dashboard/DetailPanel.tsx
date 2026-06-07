@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './CSS/DetailPanel.css';
 
 type DetailPanelOptions = 'activity' | 'comments' | 'versions';
 
@@ -16,7 +17,7 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
   // TODO: revisar si no hay que declarar algunas variables antes 
 
   return (
-    <aside className="detail-panel" id="detailPanel">
+    <aside className="detail-panel open" id="detailPanel">
       <div className="dp-header">
         <div className="dp-top">
           <div className="dp-file-icon" id="dpIcon">
@@ -36,9 +37,9 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
       <div className="dp-section">
         <div className="dp-row"><span className="dp-label">Sharing</span><span className="dp-link">Manage</span></div>
         <div className="avatar-stack">
-          <div className="av-circle bg-blue-600">A</div>
-          <div className="av-circle bg-amber-500">B</div>
-          <div className="av-circle bg-emerald-500">C</div>
+          <div className="av-circle" style={{ background: '#4169e1' }}>A</div>
+          <div className="av-circle" style={{ background: '#f59e0b' }}>B</div>
+          <div className="av-circle" style={{ background: '#10b981' }}>C</div>
           <div className="av-circle av-extra">+3</div>
         </div>
       </div>

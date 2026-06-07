@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './CSS/Sidebar.css';
 
 type NavTab = 'all' | 'recent' | 'fav' | 'shared' | 'tags';
 

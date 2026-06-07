@@ -1,23 +1,18 @@
-/* Reseteo básico y variables */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Public Sans', sans-serif;
-}
+/* ── Register Page — Scoped under .register-page to avoid global leaks ── */
 
-body {
+.register-page {
     background-color: #F5F5F9;
-    /* Color de fondo lila/gris claro */
     color: #566a7f;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: 'Public Sans', sans-serif;
+    overflow: auto;
 }
 
 /* Contenedor principal de dos columnas */
-.container {
+.register-page .rp-container {
     display: flex;
     width: 100%;
     max-width: 1200px;
@@ -27,39 +22,39 @@ body {
 }
 
 /* --- Panel Izquierdo --- */
-.left-panel {
+.register-page .rp-left-panel {
     flex: 1;
     padding-right: 50px;
 }
 
-.left-panel h1 {
+.register-page .rp-left-panel h1 {
     font-size: 3.5rem;
     color: #2b2c40;
     line-height: 1.2;
     margin-bottom: 80px;
 }
 
-.brand-logo-bottom {
+.register-page .rp-brand-logo {
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.theme {
+.register-page .rp-theme {
     color: #5db7f7;
 }
 
-.selection {
+.register-page .rp-selection {
     color: #2b2c40;
 }
 
 /* --- Panel Derecho (Tarjeta) --- */
-.right-panel {
+.register-page .rp-right-panel {
     flex: 1;
     display: flex;
     justify-content: flex-end;
 }
 
-.login-card {
+.register-page .rp-card {
     background: #ffffff;
     width: 100%;
     max-width: 400px;
@@ -69,13 +64,13 @@ body {
 }
 
 /* Logo de la tarjeta */
-.card-logo {
+.register-page .rp-card-logo {
     display: flex;
     align-items: center;
     margin-bottom: 25px;
 }
 
-.logo-icon {
+.register-page .rp-logo-icon {
     width: 20px;
     height: 20px;
     background-color: #696cff;
@@ -83,32 +78,32 @@ body {
     margin-right: 10px;
 }
 
-.logo-text {
+.register-page .rp-logo-text {
     font-size: 1.5rem;
     font-weight: 700;
     color: #566a7f;
 }
 
-/* Textos de bienvenida */
-.login-card h2 {
+/* Textos */
+.register-page .rp-card h2 {
     font-size: 1.5rem;
     color: #566a7f;
     margin-bottom: 8px;
     font-weight: 600;
 }
 
-.subtitle {
+.register-page .rp-subtitle {
     font-size: 0.95rem;
     color: #697a8d;
     margin-bottom: 25px;
 }
 
 /* Formulario y Controles */
-.input-group {
+.register-page .rp-input-group {
     margin-bottom: 18px;
 }
 
-label {
+.register-page .rp-label {
     display: block;
     font-size: 0.8rem;
     font-weight: 600;
@@ -117,8 +112,7 @@ label {
     text-transform: uppercase;
 }
 
-input[type="text"],
-input[type="password"] {
+.register-page .rp-input {
     width: 100%;
     padding: 10px 14px;
     border: 1px solid #d9dee3;
@@ -126,36 +120,24 @@ input[type="password"] {
     font-size: 0.95rem;
     outline: none;
     transition: border-color 0.15s ease-in-out;
+    font-family: 'Public Sans', sans-serif;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus {
+.register-page .rp-input:focus {
     border-color: #696cff;
 }
 
-.password-labels {
+.register-page .rp-password-labels {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.forgot-link,
-.register-text a {
-    font-size: 0.85rem;
-    color: #696cff;
-    text-decoration: none;
-}
-
-.forgot-link:hover,
-.register-text a:hover {
-    text-decoration: underline;
-}
-
-.input-icon-wrapper {
+.register-page .rp-input-icon-wrapper {
     position: relative;
 }
 
-.eye-icon {
+.register-page .rp-eye-icon {
     position: absolute;
     right: 12px;
     top: 50%;
@@ -165,30 +147,30 @@ input[type="password"]:focus {
 }
 
 /* Checkbox */
-.checkbox-group {
+.register-page .rp-checkbox-group {
     display: flex;
     align-items: center;
     margin-bottom: 20px;
 }
 
-.checkbox-group input {
+.register-page .rp-checkbox-group input {
     margin-right: 8px;
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
 
-.checkbox-group label {
+.register-page .rp-checkbox-label {
     margin-bottom: 0;
-    text-transform: none;
+    font-size: 0.8rem;
     font-weight: 400;
+    color: #566a7f;
     cursor: pointer;
 }
 
 /* Botón Principal */
-.btn-primary {
-    width: 100%;
-    padding: 10px;
+.register-page .rp-btn-primary {
+    padding: 10px 24px;
     background-color: #696cff;
     color: white;
     border: none;
@@ -197,23 +179,15 @@ input[type="password"]:focus {
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
-    margin-bottom: 20px;
+    font-family: 'Public Sans', sans-serif;
 }
 
-.btn-primary:hover {
+.register-page .rp-btn-primary:hover {
     background-color: #5f61e6;
 }
 
-/* Texto de registro */
-.register-text {
-    text-align: center;
-    font-size: 0.95rem;
-    color: #697a8d;
-    margin-bottom: 20px;
-}
-
 /* Separador OR */
-.divider {
+.register-page .rp-divider {
     display: flex;
     align-items: center;
     text-align: center;
@@ -222,25 +196,25 @@ input[type="password"]:focus {
     font-size: 0.85rem;
 }
 
-.divider::before,
-.divider::after {
+.register-page .rp-divider::before,
+.register-page .rp-divider::after {
     content: "";
     flex: 1;
     border-bottom: 1px solid #d9dee3;
 }
 
-.divider span {
+.register-page .rp-divider span {
     padding: 0 10px;
 }
 
 /* Botones Sociales */
-.social-buttons {
+.register-page .rp-social-buttons {
     display: flex;
     justify-content: center;
     gap: 15px;
 }
 
-.btn-social {
+.register-page .rp-btn-social {
     width: 36px;
     height: 36px;
     border: none;
@@ -251,34 +225,20 @@ input[type="password"]:focus {
     font-size: 1.1rem;
 }
 
-.fb {
-    background-color: #e1e8fa;
-    color: #3b5998;
-}
+.register-page .rp-fb { background-color: #e1e8fa; color: #3b5998; }
+.register-page .rp-gp { background-color: #fce4e4; color: #db4437; }
+.register-page .rp-tw { background-color: #e2f4fb; color: #1da1f2; }
 
-.gp {
-    background-color: #fce4e4;
-    color: #db4437;
-}
-
-.tw {
-    background-color: #e2f4fb;
-    color: #1da1f2;
-}
-
-/* Responsive para pantallas pequeñas */
+/* Responsive */
 @media (max-width: 900px) {
-    .container {
+    .register-page .rp-container {
         flex-direction: column;
         justify-content: center;
     }
-
-    .left-panel {
+    .register-page .rp-left-panel {
         display: none;
-        /* Oculta el texto grande en móviles para centrar el login */
     }
-
-    .right-panel {
+    .register-page .rp-right-panel {
         justify-content: center;
     }
 }

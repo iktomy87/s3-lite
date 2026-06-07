@@ -1,23 +1,18 @@
-/* Reseteo básico y variables */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Public Sans', sans-serif;
-}
+/* ── Login Page — Scoped under .login-page to avoid global leaks ── */
 
-body {
+.login-page {
     background-color: #F5F5F9;
-    /* Color de fondo lila/gris claro */
     color: #566a7f;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: 'Public Sans', sans-serif;
+    overflow: auto;
 }
 
 /* Contenedor principal de dos columnas */
-.container {
+.login-page .lp-container {
     display: flex;
     width: 100%;
     max-width: 1200px;
@@ -27,39 +22,39 @@ body {
 }
 
 /* --- Panel Izquierdo --- */
-.left-panel {
+.login-page .lp-left-panel {
     flex: 1;
     padding-right: 50px;
 }
 
-.left-panel h1 {
+.login-page .lp-left-panel h1 {
     font-size: 3.5rem;
     color: #2b2c40;
     line-height: 1.2;
     margin-bottom: 80px;
 }
 
-.brand-logo-bottom {
+.login-page .lp-brand-logo {
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.theme {
+.login-page .lp-theme {
     color: #5db7f7;
 }
 
-.selection {
+.login-page .lp-selection {
     color: #2b2c40;
 }
 
 /* --- Panel Derecho (Tarjeta) --- */
-.right-panel {
+.login-page .lp-right-panel {
     flex: 1;
     display: flex;
     justify-content: flex-end;
 }
 
-.login-card {
+.login-page .lp-card {
     background: #ffffff;
     width: 100%;
     max-width: 400px;
@@ -69,13 +64,13 @@ body {
 }
 
 /* Logo de la tarjeta */
-.card-logo {
+.login-page .lp-card-logo {
     display: flex;
     align-items: center;
     margin-bottom: 25px;
 }
 
-.logo-icon {
+.login-page .lp-logo-icon {
     width: 20px;
     height: 20px;
     background-color: #696cff;
@@ -83,32 +78,32 @@ body {
     margin-right: 10px;
 }
 
-.logo-text {
+.login-page .lp-logo-text {
     font-size: 1.5rem;
     font-weight: 700;
     color: #566a7f;
 }
 
 /* Textos de bienvenida */
-.login-card h2 {
+.login-page .lp-card h2 {
     font-size: 1.5rem;
     color: #566a7f;
     margin-bottom: 8px;
     font-weight: 600;
 }
 
-.subtitle {
+.login-page .lp-subtitle {
     font-size: 0.95rem;
     color: #697a8d;
     margin-bottom: 25px;
 }
 
 /* Formulario y Controles */
-.input-group {
+.login-page .lp-input-group {
     margin-bottom: 18px;
 }
 
-label {
+.login-page .lp-label {
     display: block;
     font-size: 0.8rem;
     font-weight: 600;
@@ -117,8 +112,7 @@ label {
     text-transform: uppercase;
 }
 
-input[type="text"],
-input[type="password"] {
+.login-page .lp-input {
     width: 100%;
     padding: 10px 14px;
     border: 1px solid #d9dee3;
@@ -126,36 +120,34 @@ input[type="password"] {
     font-size: 0.95rem;
     outline: none;
     transition: border-color 0.15s ease-in-out;
+    font-family: 'Public Sans', sans-serif;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus {
+.login-page .lp-input:focus {
     border-color: #696cff;
 }
 
-.password-labels {
+.login-page .lp-password-labels {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.forgot-link,
-.register-text a {
+.login-page .lp-forgot-link {
     font-size: 0.85rem;
     color: #696cff;
     text-decoration: none;
 }
 
-.forgot-link:hover,
-.register-text a:hover {
+.login-page .lp-forgot-link:hover {
     text-decoration: underline;
 }
 
-.input-icon-wrapper {
+.login-page .lp-input-icon-wrapper {
     position: relative;
 }
 
-.eye-icon {
+.login-page .lp-eye-icon {
     position: absolute;
     right: 12px;
     top: 50%;
@@ -165,28 +157,29 @@ input[type="password"]:focus {
 }
 
 /* Checkbox */
-.checkbox-group {
+.login-page .lp-checkbox-group {
     display: flex;
     align-items: center;
     margin-bottom: 20px;
 }
 
-.checkbox-group input {
+.login-page .lp-checkbox-group input {
     margin-right: 8px;
     width: 16px;
     height: 16px;
     cursor: pointer;
 }
 
-.checkbox-group label {
+.login-page .lp-checkbox-label {
     margin-bottom: 0;
-    text-transform: none;
+    font-size: 0.8rem;
     font-weight: 400;
+    color: #566a7f;
     cursor: pointer;
 }
 
 /* Botón Principal */
-.btn-primary {
+.login-page .lp-btn-primary {
     width: 100%;
     padding: 10px;
     background-color: #696cff;
@@ -198,22 +191,33 @@ input[type="password"]:focus {
     cursor: pointer;
     transition: background-color 0.2s;
     margin-bottom: 20px;
+    font-family: 'Public Sans', sans-serif;
 }
 
-.btn-primary:hover {
+.login-page .lp-btn-primary:hover {
     background-color: #5f61e6;
 }
 
 /* Texto de registro */
-.register-text {
+.login-page .lp-register-text {
     text-align: center;
     font-size: 0.95rem;
     color: #697a8d;
     margin-bottom: 20px;
 }
 
+.login-page .lp-register-text a {
+    font-size: 0.85rem;
+    color: #696cff;
+    text-decoration: none;
+}
+
+.login-page .lp-register-text a:hover {
+    text-decoration: underline;
+}
+
 /* Separador OR */
-.divider {
+.login-page .lp-divider {
     display: flex;
     align-items: center;
     text-align: center;
@@ -222,25 +226,25 @@ input[type="password"]:focus {
     font-size: 0.85rem;
 }
 
-.divider::before,
-.divider::after {
+.login-page .lp-divider::before,
+.login-page .lp-divider::after {
     content: "";
     flex: 1;
     border-bottom: 1px solid #d9dee3;
 }
 
-.divider span {
+.login-page .lp-divider span {
     padding: 0 10px;
 }
 
 /* Botones Sociales */
-.social-buttons {
+.login-page .lp-social-buttons {
     display: flex;
     justify-content: center;
     gap: 15px;
 }
 
-.btn-social {
+.login-page .lp-btn-social {
     width: 36px;
     height: 36px;
     border: none;
@@ -251,34 +255,20 @@ input[type="password"]:focus {
     font-size: 1.1rem;
 }
 
-.fb {
-    background-color: #e1e8fa;
-    color: #3b5998;
-}
+.login-page .lp-fb { background-color: #e1e8fa; color: #3b5998; }
+.login-page .lp-gp { background-color: #fce4e4; color: #db4437; }
+.login-page .lp-tw { background-color: #e2f4fb; color: #1da1f2; }
 
-.gp {
-    background-color: #fce4e4;
-    color: #db4437;
-}
-
-.tw {
-    background-color: #e2f4fb;
-    color: #1da1f2;
-}
-
-/* Responsive para pantallas pequeñas */
+/* Responsive */
 @media (max-width: 900px) {
-    .container {
+    .login-page .lp-container {
         flex-direction: column;
         justify-content: center;
     }
-
-    .left-panel {
+    .login-page .lp-left-panel {
         display: none;
-        /* Oculta el texto grande en móviles para centrar el login */
     }
-
-    .right-panel {
+    .login-page .lp-right-panel {
         justify-content: center;
     }
 }

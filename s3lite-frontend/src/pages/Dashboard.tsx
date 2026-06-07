@@ -13,6 +13,7 @@ import { ToastContainer, ToastProps } from '../components/Dashboard/ToastContain
 export const Dashboard: React.FC = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'versions'>('activity');
+    const [currentBucket, setCurrentBucket] = useState('');
 
     // Modals state
     const [isCreateBucketOpen, setIsCreateBucketOpen] = useState(false);
@@ -40,8 +41,8 @@ export const Dashboard: React.FC = () => {
             userName="John Doe"
             storageUsedGB={42}
             storageTotalGB={256}
-            onExploreBucket={(name) => console.log('Explore', name)}
-            onLogout={() => console.log('Logout')}
+            onExploreBucket={(name) => setCurrentBucket(name)}
+            onLogout={() => { setCurrentBucket(''); console.log('Logout'); }}
         />
     );
 
@@ -53,6 +54,7 @@ export const Dashboard: React.FC = () => {
             onRefresh={() => console.log('Refresh')}
             onUpload={() => setIsUploadOpen(true)}
             onCreateBucket={() => setIsCreateBucketOpen(true)}
+            showUpload={!!currentBucket}
         />
     );
 

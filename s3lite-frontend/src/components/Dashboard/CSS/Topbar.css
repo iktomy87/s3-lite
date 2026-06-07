@@ -5,14 +5,14 @@
     display: flex;
     align-items: center;
     padding: 0 20px;
-    gap: 8px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
 .topbar-tabs {
     display: flex;
     gap: 4px;
-    flex: 1;
+    /* no flex:1 — the spacer div handles the push */
 }
 
 .tab-btn {
@@ -109,6 +109,7 @@
 .btn-primary {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     padding: 7px 16px;
     border-radius: var(--r);

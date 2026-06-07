@@ -5,71 +5,68 @@ export const RegisterForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="container">
-      <div className="left-panel">
-        <h1>Impressive<br />React Login Page<br />Template</h1>
-        <div className="brand-logo-bottom">
-          <span className="theme">THEME</span><span className="selection">SELECTION</span>
+    <div className="register-page">
+      <div className="rp-container">
+        <div className="rp-left-panel">
+          <h1>Impressive<br />React Register Page<br />Template</h1>
+          <div className="rp-brand-logo">
+            <span className="rp-theme">THEME</span><span className="rp-selection">SELECTION</span>
+          </div>
         </div>
-      </div>
 
-      <div className="right-panel">
-        <div className="login-card">
-          <div className="card-logo">
-            <div className="logo-icon"></div>
-            <span className="logo-text">sneat</span>
-          </div>
-
-          <h2>Welcome to Sneat! 👋</h2>
-          <p className="subtitle">Please sign-in to your account and start the adventure</p>
-
-          <form onSubmit={(e) => e.preventDefault()}>
-            <div className="input-group">
-              <label htmlFor="email">EMAIL OR USERNAME</label>
-              <input type="text" id="email" placeholder="Enter your email or username" />
+        <div className="rp-right-panel">
+          <div className="rp-card">
+            <div className="rp-card-logo">
+              <div className="rp-logo-icon"></div>
+              <span className="rp-logo-text">sneat</span>
             </div>
 
-            <div className="input-group">
-              <div className="password-labels">
-                <label htmlFor="password">PASSWORD</label>
-                <a href="#" className="forgot-link">Forgot Password?</a>
+            <h2>Create an Account! 🚀</h2>
+            <p className="rp-subtitle">Fill in the details to create your new account</p>
+
+            <form onSubmit={(e) => e.preventDefault()}>
+              <div className="rp-input-group">
+                <label className="rp-label" htmlFor="reg-email">EMAIL OR USERNAME</label>
+                <input className="rp-input" type="text" id="reg-email" placeholder="Enter your email or username" />
               </div>
-              <div className="input-icon-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  placeholder="············"
-                />
-                <span
-                  className="eye-icon"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  👁️
-                </span>
+
+              <div className="rp-input-group">
+                <div className="rp-password-labels">
+                  <label className="rp-label" htmlFor="reg-password">PASSWORD</label>
+                </div>
+                <div className="rp-input-icon-wrapper">
+                  <input
+                    className="rp-input"
+                    type={showPassword ? "text" : "password"}
+                    id="reg-password"
+                    placeholder="············"
+                  />
+                  <span
+                    className="rp-eye-icon"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    👁️
+                  </span>
+                </div>
               </div>
+
+              <div className="rp-checkbox-group">
+                <input type="checkbox" id="reg-terms" />
+                <label className="rp-checkbox-label" htmlFor="reg-terms">I agree to the Terms & Privacy</label>
+              </div>
+
+              <button type="submit" className="rp-btn-primary">Sign up</button>
+            </form>
+
+            <div className="rp-divider">
+              <span>or</span>
             </div>
 
-            <div className="checkbox-group">
-              <input type="checkbox" id="remember" />
-              <label htmlFor="remember">Remember Me</label>
+            <div className="rp-social-buttons">
+              <button type="button" className="rp-btn-social rp-fb">f</button>
+              <button type="button" className="rp-btn-social rp-gp">g+</button>
+              <button type="button" className="rp-btn-social rp-tw">t</button>
             </div>
-
-            <button type="submit" className="btn-primary">Sign in</button>
-          </form>
-
-          <p className="register-text">
-            New on our platform? <a href="#">Create an account</a>
-          </p>
-
-          <div className="divider">
-            <span>or</span>
-          </div>
-
-          <div className="social-buttons">
-            <button type="button" className="btn-social fb">f</button>
-            <button type="button" className="btn-social gp">g+</button>
-            <button type="button" className="btn-social tw">t</button>
           </div>
         </div>
       </div>
