@@ -1,0 +1,241 @@
+.sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.logo-mark svg {
+    display: block;
+}
+
+.logo-name {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    color: var(--text);
+}
+
+.logo-ver {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+}
+
+.bucket-form {
+    padding: 10px 12px 0;
+    display: flex;
+    gap: 6px;
+}
+
+.bucket-form input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface2);
+    outline: none;
+    transition: border-color .15s;
+}
+
+.bucket-form input:focus {
+    border-color: var(--accent);
+}
+
+.bucket-form button {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--r);
+    padding: 6px 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background .15s;
+}
+
+.bucket-form button:hover {
+    background: var(--accent2);
+}
+
+.nav {
+    flex: 1;
+    padding: 8px 8px;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--r);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font);
+    transition: all .12s;
+    user-select: none;
+}
+
+.nav-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+.nav-item.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.nav-item .nav-icon {
+    display: flex;
+    align-items: center;
+    width: 18px;
+}
+
+.nav-item .nav-arrow {
+    margin-left: auto;
+    opacity: 0.5;
+}
+
+.sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.footer-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    width: 100%;
+    text-align: left;
+}
+
+.storage-widget {
+    background: var(--surface2);
+    border-radius: var(--r2);
+    padding: 10px 12px;
+    margin-top: 2px;
+}
+
+.storage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+}
+
+.storage-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.storage-bar {
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.storage-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 42%;
+    transition: width .5s;
+}
+
+.storage-sub {
+    font-size: 10.5px;
+    color: var(--text3);
+    margin-top: 5px;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 1.5px solid var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    font-family: var(--mono);
+}
+
+.user-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px;
+    display: flex;
+    border-radius: 5px;
+    transition: background .12s;
+}
+
+.logout-btn:hover {
+    background: var(--surface3);
+}

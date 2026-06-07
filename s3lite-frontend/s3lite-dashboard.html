@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>S3-Lite — Object Storage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── Reset & Base ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #eef0f6;
+  --surface:  #ffffff;
+  --surface2: #f5f6fa;
+  --surface3: #eef0f7;
+  --border:   #e8eaf0;
+  --border2:  #d8dbe8;
+  --accent:   #4169e1;
+  --accent2:  #2f54c7;
+  --accent-dim: rgba(65,105,225,.10);
+  --accent-glow: rgba(65,105,225,.22);
+  --success:  #22c55e;
+  --danger:   #ef4444;
+  --warn:     #f59e0b;
+  --text:     #141824;
+  --text2:    #5c6072;
+  --text3:    #9ba0b0;
+  --shadow:   0 2px 16px rgba(20,24,40,.07);
+  --shadow-lg:0 8px 40px rgba(20,24,40,.13);
+  --r:        8px;
+  --r2:       12px;
+  --r3:       18px;
+  --font:     'DM Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+}
+
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout Shell ────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  height: 100vh;
+  padding: 14px;
+  gap: 0;
+}
+.app-frame {
+  flex: 1;
+  display: flex;
+  border-radius: var(--r3);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: var(--surface);
+  min-width: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-mark svg { display: block; }
+.logo-name { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: var(--text); }
+.logo-ver  { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+.bucket-form {
+  padding: 10px 12px 0;
+  display: flex; gap: 6px;
+}
+.bucket-form input {
+  flex: 1; padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  font-family: var(--font); font-size: 12px; color: var(--text);
+  background: var(--surface2); outline: none;
+  transition: border-color .15s;
+}
+.bucket-form input:focus { border-color: var(--accent); }
+.bucket-form button {
+  background: var(--accent); border: none; border-radius: var(--r);
+  padding: 6px 9px; cursor: pointer; display: flex; align-items: center;
+  transition: background .15s;
+}
+.bucket-form button:hover { background: var(--accent2); }
+
+.nav { flex: 1; padding: 8px 8px; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--r);
+  font-size: 13px; font-weight: 400; color: var(--text2);
+  cursor: pointer; border: none; background: none; width: 100%;
+  text-align: left; font-family: var(--font);
+  transition: all .12s;
+  user-select: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active {
+  background: var(--accent-dim); color: var(--accent); font-weight: 600;
+}
+.nav-item .nav-icon { display: flex; align-items: center; width: 18px; }
+.nav-item .nav-arrow { margin-left: auto; opacity: 0.5; }
+
+.sidebar-footer { border-top: 1px solid var(--border); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.footer-link {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--text2); cursor: pointer; padding: 4px 0;
+  border: none; background: none; font-family: var(--font); width: 100%; text-align: left;
+}
+.storage-widget {
+  background: var(--surface2); border-radius: var(--r2);
+  padding: 10px 12px; margin-top: 2px;
+}
+.storage-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.storage-label  { font-size: 12px; font-weight: 600; color: var(--text); }
+.storage-bar    { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.storage-fill   { height: 100%; background: var(--accent); border-radius: 3px; width: 42%; transition: width .5s; }
+.storage-sub    { font-size: 10.5px; color: var(--text3); margin-top: 5px; }
+.user-row       { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.user-avatar    { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1.5px solid var(--accent-glow); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; font-family: var(--mono); }
+.user-name      { font-size: 12.5px; font-weight: 500; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.logout-btn     { background: none; border: none; cursor: pointer; padding: 3px; display: flex; border-radius: 5px; transition: background .12s; }
+.logout-btn:hover { background: var(--surface3); }
+
+/* ── Main ────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.topbar {
+  height: 54px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 8px; flex-shrink: 0;
+}
+.topbar-tabs { display: flex; gap: 4px; flex: 1; }
+.tab-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r);
+  border: 1.5px solid transparent;
+  font-size: 13px; font-weight: 400; color: var(--text3);
+  cursor: pointer; background: none; font-family: var(--font);
+  transition: all .12s;
+}
+.tab-btn.active {
+  border-color: var(--accent); background: var(--accent-dim);
+  color: var(--accent); font-weight: 600;
+}
+.search-wrap { position: relative; width: 220px; }
+.search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.search-wrap input {
+  width: 100%; padding: 7px 12px 7px 30px;
+  border: 1.5px solid var(--border); border-radius: var(--r);
+  font-family: var(--font); font-size: 12.5px; color: var(--text);
+  background: var(--surface2); outline: none; transition: border-color .15s;
+}
+.search-wrap input:focus { border-color: var(--accent); background: var(--surface); }
+.icon-btn {
+  background: none; border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 6px 8px; cursor: pointer;
+  display: flex; align-items: center; transition: all .12s;
+}
+.icon-btn:hover { background: var(--surface2); border-color: var(--border2); }
+.btn-upload {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r);
+  background: var(--surface2); color: var(--accent);
+  border: 1.5px solid var(--border2); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: all .12s;
+}
+.btn-upload:hover { background: var(--accent-dim); border-color: var(--accent); }
+.btn-primary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: var(--r);
+  background: var(--accent); color: #fff;
+  border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: background .12s;
+}
+.btn-primary:hover { background: var(--accent2); }
+
+/* ── Content Area ────────────────────────────────────────────── */
+.content-area { flex: 1; display: flex; overflow: hidden; }
+
+/* ── File Browser ────────────────────────────────────────────── */
+.file-browser { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* Quick Access */
+.quick-access-bar {
+  padding: 16px 20px 0;
+  background: #fafbff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.qa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.qa-title  { font-size: 13px; font-weight: 700; color: var(--text); }
+.qa-cards  { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; }
+.qa-cards::-webkit-scrollbar { height: 0; }
+.qa-card {
+  min-width: 140px; max-width: 165px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r2); padding: 14px 15px;
+  cursor: pointer; flex-shrink: 0;
+  transition: all .15s; user-select: none;
+}
+.qa-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+.qa-icon-wrap { width: 34px; height: 34px; background: var(--accent-dim); border-radius: var(--r); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.qa-name { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qa-meta { font-size: 11px; color: var(--text3); }
+
+/* File list header */
+.file-header {
+  padding: 11px 20px 9px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.breadcrumb { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb span { color: var(--text2); cursor: pointer; transition: color .1s; }
+.breadcrumb span:hover { color: var(--accent); }
+.breadcrumb .bc-current { color: var(--accent); font-weight: 600; }
+.bc-sep { color: var(--text3); display: flex; align-items: center; }
+.filter-row { display: flex; align-items: center; gap: 8px; }
+.filter-check { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); cursor: pointer; user-select: none; }
+.filter-check input { accent-color: var(--accent); cursor: pointer; }
+.filter-input-wrap { position: relative; }
+.filter-input-wrap svg { position: absolute; left: 7px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.filter-input {
+  padding: 5px 8px 5px 24px; border-radius: var(--r);
+  border: 1.5px solid var(--border); font-family: var(--font); font-size: 12px;
+  color: var(--text); background: var(--surface2); outline: none; width: 110px; transition: all .15s;
+}
+.filter-input:focus { border-color: var(--accent); background: var(--surface); }
+
+/* File Table */
+.file-scroll { flex: 1; overflow-y: auto; }
+.file-scroll::-webkit-scrollbar { width: 4px; }
+.file-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.file-table { width: 100%; border-collapse: collapse; }
+.file-table th {
+  position: sticky; top: 0; z-index: 1;
+  padding: 8px 20px; text-align: left;
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .05em;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  white-space: nowrap; user-select: none;
+}
+.file-table th.sortable { cursor: pointer; }
+.file-table th.sortable:hover { color: var(--accent); }
+.th-arrow { display: inline-flex; align-items: center; margin-left: 3px; vertical-align: middle; opacity: .5; }
+.file-table td { padding: 9px 20px; border-bottom: 1px solid #f3f4f8; vertical-align: middle; }
+.file-table tr { transition: background .08s; cursor: pointer; }
+.file-table tr:hover td { background: #f8f9fd; }
+.file-table tr.selected td { background: var(--accent-dim); }
+.file-table tr:last-child td { border-bottom: none; }
+
+.cell-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cell-name .fname {
+  font-size: 13px; font-weight: 400; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.file-table tr.selected .fname { font-weight: 600; }
+.badge {
+  flex-shrink: 0; font-size: 10px; font-family: var(--mono); font-weight: 600;
+  padding: 1px 7px; border-radius: 20px;
+}
+.badge-blue   { background: var(--accent-dim); color: var(--accent); }
+.badge-red    { background: #fef2f2; color: var(--danger); }
+.badge-green  { background: #f0fdf4; color: #16a34a; }
+.cell-sharing { font-size: 12.5px; color: var(--text2); white-space: nowrap; }
+.cell-size    { font-size: 12px; color: var(--text2); font-family: var(--mono); white-space: nowrap; }
+.cell-date    { font-size: 12.5px; color: var(--text2); white-space: nowrap; }
+.cell-actions { text-align: right; }
+.row-actions { display: flex; gap: 2px; justify-content: flex-end; opacity: 0; transition: opacity .1s; }
+tr:hover .row-actions, tr.selected .row-actions { opacity: 1; }
+.act-btn {
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  border-radius: 6px; display: flex; align-items: center; transition: background .1s;
+}
+.act-btn:hover { background: var(--surface3); }
+.act-btn.danger:hover { background: #fef2f2; }
+
+/* File icon colors */
+.fi-folder { color: #4169e1; }
+.fi-image  { color: #f59e0b; }
+.fi-code   { color: #10b981; }
+.fi-text   { color: #6b7280; }
+.fi-pdf    { color: #ef4444; }
+.fi-doc    { color: #3b82f6; }
+.fi-archive{ color: #f97316; }
+.fi-file   { color: #9ca3af; }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; gap: 14px; color: var(--text3);
+}
+.empty-icon { width: 60px; height: 60px; background: var(--surface2); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.empty-title { font-size: 14px; font-weight: 600; color: var(--text2); }
+.empty-sub   { font-size: 12px; color: var(--text3); }
+
+/* Loading */
+.loading-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+/* ── Detail Panel ─────────────────────────────────────────────── */
+.detail-panel {
+  width: 270px; flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; height: 100%;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
+}
+.detail-panel.open { transform: translateX(0); }
+
+.dp-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+.dp-top    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dp-file-icon { width: 36px; height: 36px; background: var(--accent-dim); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.dp-close  { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; transition: background .1s; }
+.dp-close:hover { background: var(--surface2); }
+.dp-name   { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; word-break: break-all; }
+.dp-meta   { font-size: 11.5px; color: var(--text3); }
+
+.dp-section { padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.dp-row     { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dp-label   { font-size: 12px; font-weight: 600; color: var(--text); }
+.dp-link    { font-size: 11px; font-weight: 500; color: var(--accent); cursor: pointer; }
+.dp-tags    { display: flex; gap: 6px; flex-wrap: wrap; }
+.dp-tag     { font-size: 11px; background: var(--surface2); color: var(--accent); border: 1.5px solid #dde6fc; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+
+.avatar-stack { display: flex; align-items: center; }
+.av-circle {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--surface); margin-left: -6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: #fff; font-family: var(--mono);
+}
+.av-circle:first-child { margin-left: 0; }
+.av-extra { background: #e5e7eb; color: var(--text2); }
+
+.dp-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.dp-tab  {
+  flex: 1; padding: 10px 0; border: none; background: none;
+  font-size: 12px; font-family: var(--font); color: var(--text3);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  font-weight: 400; transition: all .12s;
+}
+.dp-tab.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+
+.dp-body { flex: 1; overflow-y: auto; padding: 14px 18px; }
+.dp-body::-webkit-scrollbar { width: 3px; }
+.dp-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.activity-group-title { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+.activity-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; }
+.activity-dot  { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 4px; flex-shrink: 0; }
+.activity-text { font-size: 12.5px; color: var(--text); }
+.activity-sub  { font-size: 11px; color: var(--text3); }
+.activity-link { color: var(--accent); font-weight: 500; cursor: pointer; }
+
+.dp-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+.dp-footer .btn-primary { flex: 1; justify-content: center; font-size: 12.5px; padding: 8px; }
+.dp-footer .btn-danger  { display: flex; align-items: center; justify-content: center; background: #fef2f2; color: var(--danger); border: none; border-radius: var(--r); padding: 8px 11px; cursor: pointer; transition: background .12s; }
+.dp-footer .btn-danger:hover { background: #fee2e2; }
+
+/* ── Modals ────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.28);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none; transition: opacity .18s;
+}
+.modal-backdrop.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border-radius: var(--r3);
+  padding: 28px; box-shadow: var(--shadow-lg);
+  transform: translateY(8px) scale(.98);
+  transition: transform .18s cubic-bezier(.4,0,.2,1);
+}
+.modal-backdrop.show .modal { transform: translateY(0) scale(1); }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+.form-field  { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.form-label  { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+.form-input  {
+  padding: 9px 12px; border: 1.5px solid var(--border);
+  border-radius: var(--r); font-family: var(--font); font-size: 13px;
+  color: var(--text); background: var(--surface2); outline: none; transition: border-color .15s;
+  width: 100%;
+}
+.form-input:focus { border-color: var(--accent); background: var(--surface); }
+.form-hint { font-size: 11px; color: var(--text3); }
+.form-error { font-size: 12px; color: var(--danger); background: #fef2f2; padding: 8px 12px; border-radius: var(--r); margin-bottom: 12px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.btn-cancel { padding: 8px 16px; border-radius: var(--r); border: 1.5px solid var(--border2); background: var(--surface); font-size: 13px; color: var(--text2); cursor: pointer; font-family: var(--font); transition: all .12s; }
+.btn-cancel:hover { background: var(--surface2); }
+.btn-confirm { padding: 8px 18px; border-radius: var(--r); border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background .12s; }
+.btn-confirm:hover { background: var(--accent2); }
+.btn-confirm:disabled { opacity: .5; cursor: not-allowed; }
+.btn-delete-confirm { padding: 8px 18px; border-radius: var(--r); border: none; background: var(--danger); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background .12s; }
+.btn-delete-confirm:hover { background: #dc2626; }
+.drop-zone {
+  border: 2px dashed var(--border2); border-radius: var(--r2);
+  padding: 22px 16px; text-align: center; cursor: pointer;
+  background: var(--surface2); transition: all .15s; margin-bottom: 14px;
+}
+.drop-zone:hover, .drop-zone.has-file { border-color: var(--accent); background: var(--accent-dim); }
+.drop-zone-text { font-size: 13px; color: var(--text2); margin-top: 8px; }
+.drop-zone.has-file .drop-zone-text { color: var(--accent); font-weight: 600; }
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast-container { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 500; }
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: var(--r2);
+  box-shadow: 0 4px 24px rgba(0,0,0,.14);
+  padding: 11px 16px; font-size: 13px; color: var(--text);
+  border-left: 3px solid var(--accent);
+  min-width: 220px; font-family: var(--font);
+  animation: toastIn .2s ease;
+}
+.toast.error { border-left-color: var(--danger); }
+@keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* Login Screen */
+.login-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.login-card {
+  background: var(--surface); border-radius: var(--r3);
+  padding: 36px; width: 340px;
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 20px;
+}
+.login-logo-row { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.login-logo { width: 44px; height: 44px; border-radius: 12px; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.login-title  { font-size: 18px; font-weight: 700; color: var(--text); }
+.login-sub    { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.login-btn { width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: var(--r); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background .12s; }
+.login-btn:hover { background: var(--accent2); }
+.login-btn:disabled { opacity: .5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- ─── Login ─────────────────────────────────────────────────── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo-row">
+      <div class="login-logo">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" stroke="#fff" stroke-width="1.8"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" stroke="#fff" stroke-width="1.8"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" stroke="#fff" stroke-width="1.8"/></svg>
+      </div>
+      <div class="login-title">S3-Lite</div>
+      <div class="login-sub">object storage v2.0.0</div>
+    </div>
+    <div id="loginError" class="form-error" style="display:none"></div>
+    <div>
+      <div class="form-field">
+        <label class="form-label">Username</label>
+        <input class="form-input" id="loginUser" type="text" placeholder="username" autocomplete="username">
+      </div>
+      <div class="form-field" style="margin-bottom:0">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- ─── Shell ─────────────────────────────────────────────────── -->
+<div class="shell">
+  <div class="app-frame">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" stroke="#fff" stroke-width="1.8"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" stroke="#fff" stroke-width="1.8"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" stroke="#fff" stroke-width="1.8"/></svg>
+        </div>
+        <div>
+          <div class="logo-name">S3-Lite</div>
+          <div class="logo-ver">v2.0.0</div>
+        </div>
+      </div>
+
+      <form class="bucket-form" onsubmit="exploreBucket(event)">
+        <input id="bucketInput" type="text" placeholder="Bucket name…">
+        <button type="submit">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+
+      <nav class="nav">
+        <button class="nav-item active" onclick="setNav(this,'all')">
+          <span class="nav-icon"><?xml version="1.0"?><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.6"/><path d="M3 17l3-7h16l-3 7H3z" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          All Files
+          <span class="nav-arrow"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="1.8"/></svg></span>
+        </button>
+        <button class="nav-item" onclick="setNav(this,'recent')">
+          <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          Recent
+        </button>
+        <button class="nav-item" onclick="setNav(this,'fav')">
+          <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          Favorites
+        </button>
+        <button class="nav-item" onclick="setNav(this,'shared')">
+          <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="1.6"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="1.6"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          Shared
+        </button>
+        <button class="nav-item" onclick="setNav(this,'tags')">
+          <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke="currentColor" stroke-width="1.6"/><circle cx="7" cy="7" r="1" fill="currentColor"/></svg></span>
+          Tags
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="footer-link">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="#9ba0b0" stroke-width="1.6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#9ba0b0" stroke-width="1.6"/></svg>
+          Settings
+        </button>
+        <button class="footer-link">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="#9ba0b0" stroke-width="1.6"/><path d="M19 6l-1 14H6L5 6" stroke="#9ba0b0" stroke-width="1.6"/><path d="M9 6V4h6v2" stroke="#9ba0b0" stroke-width="1.6"/></svg>
+          Deleted Files
+        </button>
+        <div class="storage-widget">
+          <div class="storage-header">
+            <span class="storage-label">Storage</span>
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="#9ba0b0" stroke-width="1.8"/></svg>
+          </div>
+          <div class="storage-bar"><div class="storage-fill" id="storageBar"></div></div>
+          <div class="storage-sub" id="storageSub">42 GB used from 256 GB</div>
+        </div>
+        <div class="user-row">
+          <div class="user-avatar" id="userAvatar">?</div>
+          <div class="user-name" id="userName">—</div>
+          <button class="logout-btn" onclick="doLogout()" title="Sign out">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="#9ba0b0" stroke-width="1.6"/><line x1="6" y1="6" x2="18" y2="18" stroke="#9ba0b0" stroke-width="1.6"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-tabs">
+          <button class="tab-btn active">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.6"/><path d="M3 17l3-7h16l-3 7H3z" stroke="currentColor" stroke-width="1.6"/></svg>
+            Files
+          </button>
+          <button class="tab-btn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.6"/></svg>
+            Activity
+          </button>
+        </div>
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="#9ba0b0" stroke-width="1.8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#9ba0b0" stroke-width="1.8"/></svg>
+          <input type="text" placeholder="Search anything…" id="globalSearch" oninput="onSearch()">
+        </div>
+        <button class="icon-btn" onclick="refreshObjects()" title="Refresh">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10" stroke="#5c6072" stroke-width="1.8"/><polyline points="1 20 1 14 7 14" stroke="#5c6072" stroke-width="1.8"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#5c6072" stroke-width="1.8"/></svg>
+        </button>
+        <button class="btn-upload" id="uploadBtn" style="display:none" onclick="openUploadModal()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="12" x2="12" y2="21" stroke="currentColor" stroke-width="1.8"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" stroke="currentColor" stroke-width="1.8"/></svg>
+          Upload
+        </button>
+        <button class="btn-primary" onclick="openCreateBucketModal()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="#fff" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="#fff" stroke-width="2"/></svg>
+          Add New
+        </button>
+      </header>
+
+      <!-- Content -->
+      <div class="content-area">
+        <!-- File Browser -->
+        <div class="file-browser">
+
+          <!-- Quick Access -->
+          <div class="quick-access-bar">
+            <div class="qa-header">
+              <span class="qa-title">Quick Access</span>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2" fill="#9ba0b0"/><circle cx="12" cy="12" r="1.2" fill="#9ba0b0"/><circle cx="12" cy="19" r="1.2" fill="#9ba0b0"/></svg>
+            </div>
+            <div class="qa-cards" id="qaCards">
+              <div class="empty-state" style="padding:8px 0 4px; align-items:flex-start; gap:4px">
+                <div style="font-size:12px; color:var(--text3)">Enter a bucket name to explore it</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File list header -->
+          <div class="file-header">
+            <div class="breadcrumb" id="breadcrumb">
+              <span>Home</span>
+            </div>
+            <div class="filter-row">
+              <label class="filter-check">
+                <input type="checkbox" id="allVersionsCheck" onchange="onAllVersionsChange()">
+                All versions
+              </label>
+              <div class="filter-input-wrap">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="#9ba0b0" stroke-width="1.8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#9ba0b0" stroke-width="1.8"/></svg>
+                <input class="filter-input" type="text" placeholder="Filter…" id="localFilter" oninput="applyFilter()">
+              </div>
+              <button class="icon-btn" onclick="refreshObjects()">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10" stroke="#5c6072" stroke-width="1.8"/><polyline points="1 20 1 14 7 14" stroke="#5c6072" stroke-width="1.8"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#5c6072" stroke-width="1.8"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="file-scroll">
+            <table class="file-table" id="fileTable">
+              <thead>
+                <tr>
+                  <th class="sortable">Name <span class="th-arrow"><svg width="10" height="10" fill="none" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2"/></svg></span></th>
+                  <th>Sharing</th>
+                  <th class="sortable">Size <span class="th-arrow"><svg width="10" height="10" fill="none" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2"/></svg></span></th>
+                  <th class="sortable">Modified <span class="th-arrow"><svg width="10" height="10" fill="none" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2"/></svg></span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="fileBody">
+                <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text3); font-size:13px;">Enter a bucket name in the sidebar to explore</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <aside class="detail-panel" id="detailPanel">
+          <div class="dp-header">
+            <div class="dp-top">
+              <div class="dp-file-icon" id="dpIcon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="#4169e1" stroke-width="1.6"/><polyline points="13 2 13 9 20 9" stroke="#4169e1" stroke-width="1.6"/></svg>
+              </div>
+              <button class="dp-close" onclick="closeDetail()">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="#9ba0b0" stroke-width="1.8"/><line x1="6" y1="6" x2="18" y2="18" stroke="#9ba0b0" stroke-width="1.8"/></svg>
+              </button>
+            </div>
+            <div class="dp-name" id="dpName">—</div>
+            <div class="dp-meta" id="dpMeta">—</div>
+          </div>
+          <div class="dp-section">
+            <div class="dp-row"><span class="dp-label">Tags</span><span class="dp-link">Edit</span></div>
+            <div class="dp-tags"><span class="dp-tag">Work</span><span class="dp-tag">Source</span></div>
+          </div>
+          <div class="dp-section">
+            <div class="dp-row"><span class="dp-label">Sharing</span><span class="dp-link">Manage</span></div>
+            <div class="avatar-stack">
+              <div class="av-circle" style="background:#4169e1;">A</div>
+              <div class="av-circle" style="background:#f59e0b;">B</div>
+              <div class="av-circle" style="background:#10b981;">C</div>
+              <div class="av-circle av-extra">+3</div>
+            </div>
+          </div>
+          <div class="dp-tabs">
+            <button class="dp-tab active" onclick="setDpTab(this,'activity')">Activity</button>
+            <button class="dp-tab" onclick="setDpTab(this,'comments')">Comments</button>
+            <button class="dp-tab" onclick="setDpTab(this,'versions')">Versions</button>
+          </div>
+          <div class="dp-body" id="dpBody">
+            <div class="activity-group-title">Yesterday</div>
+            <div class="activity-item">
+              <div class="activity-dot"></div>
+              <div>
+                <div class="activity-text">You uploaded this object</div>
+                <div class="activity-sub">Version <span id="dpVersion">1</span></div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot"></div>
+              <div>
+                <div class="activity-text">Object created</div>
+                <div class="activity-sub" id="dpMimeType">application/octet-stream</div>
+              </div>
+            </div>
+          </div>
+          <div class="dp-footer">
+            <button class="btn-primary" onclick="downloadSelected()">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17" stroke="#fff" stroke-width="1.8"/><line x1="12" y1="12" x2="12" y2="21" stroke="#fff" stroke-width="1.8"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29" stroke="#fff" stroke-width="1.8"/></svg>
+              Download
+            </button>
+            <button class="btn-danger" onclick="deleteSelected()" title="Delete">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.7"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="1.7"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.7"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="1.7"/></svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div><!-- /main -->
+  </div><!-- /app-frame -->
+</div><!-- /shell -->
+
+<!-- ─── Create Bucket Modal ──────────────────────────────────── -->
+<div class="modal-backdrop" id="createBucketModal">
+  <div class="modal" style="width:380px">
+    <div class="modal-title">Create new bucket</div>
+    <div class="form-error" id="cbError" style="display:none"></div>
+    <div class="form-field">
+      <label class="form-label">Bucket name</label>
+      <input class="form-input" id="cbName" type="text" placeholder="e.g. ci-artifacts" maxlength="255">
+      <span class="form-hint">Globally unique · max 255 characters</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('createBucketModal')">Cancel</button>
+      <button class="btn-confirm" id="cbBtn" onclick="doCreateBucket()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Upload Modal ─────────────────────────────────────────── -->
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title">Upload object <span style="font-size:13px;color:var(--accent);font-weight:400" id="uploadBucketLabel"></span></div>
+    <div class="form-error" id="upError" style="display:none"></div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" style="display:block;margin:0 auto"><polyline points="16 16 12 12 8 16" stroke="#9ba0b0" stroke-width="1.8"/><line x1="12" y1="12" x2="12" y2="21" stroke="#9ba0b0" stroke-width="1.8"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" stroke="#9ba0b0" stroke-width="1.8"/></svg>
+      <div class="drop-zone-text" id="dropZoneText">Click to choose a file</div>
+    </div>
+    <input type="file" id="fileInput" style="display:none" onchange="onFileChosen(this)">
+    <div id="progressWrap" style="display:none; margin-bottom:12px">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Object key (path)</label>
+      <input class="form-input" id="upKey" type="text" placeholder="e.g. builds/2024/artifact.zip">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('uploadModal')">Cancel</button>
+      <button class="btn-confirm" id="upBtn" onclick="doUpload()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Delete Modal ─────────────────────────────────────────── -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal" style="width:360px">
+    <div class="modal-title">Delete object</div>
+    <p style="font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:14px">This will soft-delete the object and it won't appear in normal listings.</p>
+    <div style="font-family:var(--mono); font-size:12px; color:var(--danger); background:#fef2f2; padding:8px 12px; border-radius:var(--r); margin-bottom:16px; word-break:break-all" id="deleteKeyLabel">—</div>
+    <div class="form-error" id="delError" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn-delete-confirm" id="delBtn" onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast Container ──────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────
+const API  = 'http://localhost:8080';
+let   auth = null;
+let   currentUser = '';
+let   currentBucket = '';
+let   allObjects = [];
+let   selectedObj = null;
+let   deleteTarget = null;
+let   chosenFile = null;
+
+// ─── Utils ───────────────────────────────────────────────────────
+const b64 = (u, p) => 'Basic ' + btoa(`${u}:${p}`);
+function fmtSize(b) {
+  if (b == null) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso), now = new Date();
+  if (now - d < 172800000) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+function fileIconSvg(key, isFolder) {
+  if (isFolder) return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-folder"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  const ext = (key||'').split('.').pop().toLowerCase();
+  const imgs = ['jpg','jpeg','png','gif','svg','webp'];
+  const code = ['js','ts','jsx','tsx','py','java','go','html','css','json','rs'];
+  const txt  = ['md','txt'];
+  if (imgs.includes(ext)) return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-image"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.6"/><polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  if (code.includes(ext))  return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-code"><polyline points="16 18 22 12 16 6" stroke="currentColor" stroke-width="1.6"/><polyline points="8 6 2 12 8 18" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  if (txt.includes(ext))   return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.6"/><line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="1.6"/><line x1="8" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  if (ext === 'pdf')        return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-pdf"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  if (['zip','tar','gz','rar'].includes(ext)) return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-archive"><polyline points="21 8 21 21 3 21 3 8" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="3" width="22" height="5" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  return `<svg width="17" height="17" fill="none" viewBox="0 0 24 24" class="fi-file"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="currentColor" stroke-width="1.6"/><polyline points="13 2 13 9 20 9" stroke="currentColor" stroke-width="1.6"/></svg>`;
+}
+
+// ─── Toast ───────────────────────────────────────────────────────
+function toast(msg, type = 'ok') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type === 'err' ? ' error' : '');
+  const icon = type === 'ok'
+    ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke="#4169e1" stroke-width="2"/></svg>`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="#ef4444" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="#ef4444" stroke-width="2"/></svg>`;
+  t.innerHTML = icon + msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3300);
+}
+
+// ─── Modal helpers ───────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  const e = document.querySelector(`#${id} .form-error`);
+  if (e) { e.style.display = 'none'; e.textContent = ''; }
+}
+function showModalError(errId, msg) {
+  const el = document.getElementById(errId);
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(b => {
+  b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); });
+});
+
+// ─── Login ───────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (!u || !p) return;
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginBtn').textContent = 'Signing in…';
+  document.getElementById('loginError').style.display = 'none';
+  try {
+    const r = await fetch(`${API}/api/buckets/_probe`, { headers: { Authorization: b64(u,p) } });
+    if (r.status === 401) {
+      document.getElementById('loginError').textContent = 'Invalid credentials.';
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginBtn').disabled = false;
+      document.getElementById('loginBtn').textContent = 'Sign in';
+      return;
+    }
+  } catch(_) {}
+  auth = b64(u, p);
+  currentUser = u;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('userAvatar').textContent = u[0].toUpperCase();
+  document.getElementById('userName').textContent = u;
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+function doLogout() {
+  auth = null; currentUser = ''; currentBucket = ''; allObjects = []; selectedObj = null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Sign in';
+  document.getElementById('bucketInput').value = '';
+  renderTable([]);
+  updateQuickAccess([]);
+  updateBreadcrumb('');
+  closeDetail();
+  document.getElementById('uploadBtn').style.display = 'none';
+}
+
+// ─── Nav ────────────────────────────────────────────────────────
+function setNav(el, _) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── Bucket Explore ──────────────────────────────────────────────
+function exploreBucket(e) {
+  e.preventDefault();
+  const name = document.getElementById('bucketInput').value.trim();
+  if (!name) return;
+  currentBucket = name;
+  document.getElementById('uploadBtn').style.display = 'flex';
+  loadObjects();
+}
+
+async function loadObjects() {
+  if (!currentBucket || !auth) return;
+  const av = document.getElementById('allVersionsCheck').checked;
+  const params = new URLSearchParams();
+  if (av) params.set('allVersions','true');
+  document.getElementById('fileBody').innerHTML = `<tr class="loading-row"><td colspan="5">Loading objects…</td></tr>`;
+  try {
+    const r = await fetch(`${API}/api/buckets/${encodeURIComponent(currentBucket)}/objects?${params}`, { headers: { Authorization: auth } });
+    if (r.status === 403) { toast('No read permission on this bucket.','err'); renderTable([]); return; }
+    if (r.status === 404) { toast('Bucket not found.','err'); renderTable([]); return; }
+    const d = await r.json();
+    allObjects = d.objects || [];
+    updateBreadcrumb(currentBucket);
+    updateQuickAccess(allObjects);
+    applyFilter();
+  } catch(_) { toast('Connection error.','err'); renderTable([]); }
+}
+
+function refreshObjects() { loadObjects(); }
+function onAllVersionsChange() { loadObjects(); }
+function onSearch() { applyFilter(); }
+function applyFilter() {
+  const q = (document.getElementById('localFilter').value || document.getElementById('globalSearch').value || '').toLowerCase();
+  const filtered = q ? allObjects.filter(o => o.key.toLowerCase().includes(q)) : allObjects;
+  renderTable(filtered);
+}
+
+// ─── Quick Access ────────────────────────────────────────────────
+function updateQuickAccess(objs) {
+  const active = objs.filter(o => o.isLatest && !o.deleted);
+  const totalBytes = objs.reduce((s,o) => s+(o.sizeInBytes||0), 0);
+  const c = document.getElementById('qaCards');
+  if (!currentBucket) { c.innerHTML = `<div class="empty-state" style="padding:4px 0; align-items:flex-start; gap:0"><div style="font-size:12px;color:var(--text3)">Enter a bucket name to explore it</div></div>`; return; }
+  c.innerHTML = `
+    <div class="qa-card">
+      <div class="qa-icon-wrap"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke="#4169e1" stroke-width="1.6"/></svg></div>
+      <div class="qa-name" title="${currentBucket}">${currentBucket}</div>
+      <div class="qa-meta">${fmtSize(totalBytes)} · ${active.length} item${active.length!==1?'s':''}</div>
+    </div>`;
+  // Storage widget update
+  document.getElementById('storageSub').textContent = `${fmtSize(totalBytes)} used`;
+  const pct = Math.min(100, Math.round(totalBytes/(1024*1024*1024)*4));
+  document.getElementById('storageBar').style.width = pct + '%';
+}
+
+// ─── Breadcrumb ──────────────────────────────────────────────────
+function updateBreadcrumb(bucket) {
+  const bc = document.getElementById('breadcrumb');
+  if (!bucket) { bc.innerHTML = `<span>Home</span>`; return; }
+  bc.innerHTML = `<span onclick="currentBucket='';renderTable([]);updateQuickAccess([]);updateBreadcrumb('')">Home</span><span class="bc-sep"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="#9ba0b0" stroke-width="2"/></svg></span><span class="bc-current">${bucket}</span>`;
+}
+
+// ─── Table Render ────────────────────────────────────────────────
+function renderTable(objs) {
+  const body = document.getElementById('fileBody');
+  if (!currentBucket) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Enter a bucket name in the sidebar to explore</td></tr>`;
+    return;
+  }
+  if (!objs.length) {
+    body.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1" stroke="#9ba0b0" stroke-width="1.5"/><path d="M3 17l3-7h16l-3 7H3z" stroke="#9ba0b0" stroke-width="1.5"/></svg></div><div class="empty-title">No objects found</div><div class="empty-sub">Upload a file or try a different filter</div></div></td></tr>`;
+    return;
+  }
+  body.innerHTML = objs.map(obj => {
+    const name = obj.key.split('/').pop() || obj.key;
+    const isSel = selectedObj && selectedObj.key === obj.key && selectedObj.versionId === obj.versionId;
+    const badge = obj.deleted
+      ? `<span class="badge badge-red">deleted</span>`
+      : obj.isLatest ? `<span class="badge badge-blue">latest</span>` : '';
+    return `<tr class="${isSel?'selected':''}" onclick="selectObj(${JSON.stringify(obj).replace(/"/g,'&quot;')})">
+      <td><div class="cell-name">${fileIconSvg(obj.key)}<span class="fname" title="${obj.key}">${name}</span>${badge}</div></td>
+      <td class="cell-sharing">Public</td>
+      <td class="cell-size">${fmtSize(obj.sizeInBytes)}</td>
+      <td class="cell-date">${fmtDate(obj.createdAt)}</td>
+      <td class="cell-actions"><div class="row-actions">
+        ${!obj.deleted ? `
+        <button class="act-btn" onclick="event.stopPropagation();downloadObj(${JSON.stringify(obj).replace(/"/g,'&quot;')})" title="Download">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17" stroke="#5c6072" stroke-width="1.7"/><line x1="12" y1="12" x2="12" y2="21" stroke="#5c6072" stroke-width="1.7"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29" stroke="#5c6072" stroke-width="1.7"/></svg>
+        </button>
+        <button class="act-btn danger" onclick="event.stopPropagation();openDeleteModal(${JSON.stringify(obj).replace(/"/g,'&quot;')})" title="Delete">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="#ef4444" stroke-width="1.7"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#ef4444" stroke-width="1.7"/></svg>
+        </button>` : ''}
+        <button class="act-btn" onclick="event.stopPropagation()" title="More">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2" fill="#9ba0b0"/><circle cx="12" cy="12" r="1.2" fill="#9ba0b0"/><circle cx="12" cy="19" r="1.2" fill="#9ba0b0"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Select Object ───────────────────────────────────────────────
+function selectObj(obj) {
+  if (selectedObj && selectedObj.key === obj.key && selectedObj.versionId === obj.versionId) {
+    selectedObj = null; closeDetail(); applyFilter(); return;
+  }
+  selectedObj = obj;
+  openDetail(obj);
+  applyFilter();
+}
+
+function openDetail(obj) {
+  const name = obj.key.split('/').pop() || obj.key;
+  document.getElementById('dpName').textContent = name;
+  document.getElementById('dpMeta').textContent = `${fmtSize(obj.sizeInBytes)} · ${fmtDate(obj.createdAt)} · v${obj.versionId}`;
+  document.getElementById('dpVersion').textContent = obj.versionId;
+  document.getElementById('dpMimeType').textContent = obj.mimeType || 'application/octet-stream';
+  document.getElementById('dpIcon').innerHTML = fileIconSvg(obj.key);
+  const footer = document.querySelector('.dp-footer');
+  footer.style.display = obj.deleted ? 'none' : 'flex';
+  document.getElementById('detailPanel').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  selectedObj = null;
+}
+
+// ─── Detail Tabs ─────────────────────────────────────────────────
+function setDpTab(el, tab) {
+  document.querySelectorAll('.dp-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const body = document.getElementById('dpBody');
+  if (tab === 'activity') {
+    body.innerHTML = `
+      <div class="activity-group-title">Yesterday</div>
+      <div class="activity-item"><div class="activity-dot"></div><div>
+        <div class="activity-text">You uploaded this object</div>
+        <div class="activity-sub">Version ${selectedObj?.versionId||'—'} · ${fmtSize(selectedObj?.sizeInBytes)}</div>
+      </div></div>
+      <div class="activity-item"><div class="activity-dot"></div><div>
+        <div class="activity-text">Object created</div>
+        <div class="activity-sub">${selectedObj?.mimeType||'application/octet-stream'}</div>
+      </div></div>`;
+  } else if (tab === 'versions') {
+    body.innerHTML = `
+      <div style="background:var(--accent-dim);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:13px;font-weight:600;color:var(--text)">Version ${selectedObj?.versionId||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${fmtDate(selectedObj?.createdAt)}</div></div>
+        <span class="badge badge-blue">latest</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:12px">Enable "All versions" to see the full history.</p>`;
+  } else {
+    body.innerHTML = `<p style="font-size:12px;color:var(--text3);text-align:center;padding-top:20px">No comments yet.</p>`;
+  }
+}
+
+// ─── Create Bucket ───────────────────────────────────────────────
+function openCreateBucketModal() {
+  document.getElementById('cbName').value = '';
+  document.getElementById('cbError').style.display = 'none';
+  openModal('createBucketModal');
+  setTimeout(() => document.getElementById('cbName').focus(), 50);
+}
+async function doCreateBucket() {
+  const name = document.getElementById('cbName').value.trim();
+  if (!name) return;
+  document.getElementById('cbBtn').disabled = true;
+  document.getElementById('cbBtn').textContent = 'Creating…';
+  try {
+    const r = await fetch(`${API}/api/buckets/${encodeURIComponent(name)}`, { method:'PUT', headers:{ Authorization: auth } });
+    if (r.status === 201) {
+      toast('Bucket created successfully');
+      closeModal('createBucketModal');
+      document.getElementById('bucketInput').value = name;
+      currentBucket = name;
+      document.getElementById('uploadBtn').style.display = 'flex';
+      loadObjects();
+    } else if (r.status === 409) { showModalError('cbError','A bucket with this name already exists.'); }
+    else if (r.status === 403) { showModalError('cbError','No write permission on this bucket.'); }
+    else { showModalError('cbError',`Error (${r.status}).`); }
+  } catch { showModalError('cbError','Could not connect to server.'); }
+  document.getElementById('cbBtn').disabled = false;
+  document.getElementById('cbBtn').textContent = 'Create';
+}
+
+// ─── Upload ──────────────────────────────────────────────────────
+function openUploadModal() {
+  if (!currentBucket) return;
+  document.getElementById('upKey').value = '';
+  document.getElementById('upError').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('dropZone').classList.remove('has-file');
+  document.getElementById('dropZoneText').textContent = 'Click to choose a file';
+  document.getElementById('uploadBucketLabel').textContent = '→ ' + currentBucket;
+  chosenFile = null;
+  openModal('uploadModal');
+}
+function onFileChosen(inp) {
+  const f = inp.files[0]; if (!f) return;
+  chosenFile = f;
+  document.getElementById('dropZone').classList.add('has-file');
+  document.getElementById('dropZoneText').textContent = `${f.name} (${fmtSize(f.size)})`;
+  if (!document.getElementById('upKey').value) document.getElementById('upKey').value = f.name;
+}
+async function doUpload() {
+  if (!chosenFile) { showModalError('upError','Please select a file.'); return; }
+  const key = document.getElementById('upKey').value.trim();
+  if (!key) { showModalError('upError','Please enter an object key.'); return; }
+  document.getElementById('upBtn').disabled = true;
+  document.getElementById('upBtn').textContent = 'Uploading…';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('progressFill').style.width = '20%';
+  document.getElementById('upError').style.display = 'none';
+  try {
+    const r = await fetch(`${API}/api/storage/${encodeURIComponent(currentBucket)}/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      headers: { Authorization: auth, 'Content-Type': 'application/octet-stream' },
+      body: chosenFile,
+    });
+    document.getElementById('progressFill').style.width = '90%';
+    if (r.status === 201) {
+      const d = await r.json();
+      document.getElementById('progressFill').style.width = '100%';
+      setTimeout(() => {
+        closeModal('uploadModal');
+        toast(`Uploaded · version ${d.versionId}`);
+        loadObjects();
+      }, 300);
+    } else if (r.status === 403) { showModalError('upError','No write permission on this bucket.'); }
+    else if (r.status === 404) { showModalError('upError','Bucket not found.'); }
+    else { showModalError('upError', `Error (${r.status}).`); }
+  } catch { showModalError('upError','Connection error.'); }
+  document.getElementById('upBtn').disabled = false;
+  document.getElementById('upBtn').textContent = 'Upload';
+}
+
+// ─── Download ────────────────────────────────────────────────────
+async function downloadObj(obj) {
+  try {
+    const url = `${API}/api/storage/${encodeURIComponent(currentBucket)}/${encodeURIComponent(obj.key)}?versionId=${obj.versionId}`;
+    const r = await fetch(url, { headers: { Authorization: auth } });
+    if (!r.ok) { toast('Download failed.', 'err'); return; }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = obj.key.split('/').pop();
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Downloaded');
+  } catch { toast('Download error.','err'); }
+}
+function downloadSelected() { if (selectedObj) downloadObj(selectedObj); }
+
+// ─── Delete ──────────────────────────────────────────────────────
+function openDeleteModal(obj) {
+  deleteTarget = obj;
+  document.getElementById('deleteKeyLabel').textContent = obj.key;
+  document.getElementById('delError').style.display = 'none';
+  openModal('deleteModal');
+}
+function deleteSelected() { if (selectedObj) openDeleteModal(selectedObj); }
+async function doDelete() {
+  if (!deleteTarget) return;
+  document.getElementById('delBtn').disabled = true;
+  document.getElementById('delBtn').textContent = 'Deleting…';
+  try {
+    const url = `${API}/api/storage/${encodeURIComponent(currentBucket)}/${encodeURIComponent(deleteTarget.key)}?versionId=${deleteTarget.versionId}`;
+    const r = await fetch(url, { method: 'DELETE', headers: { Authorization: auth } });
+    if (r.status === 204) {
+      closeModal('deleteModal');
+      toast(`Deleted: ${deleteTarget.key.split('/').pop()}`);
+      if (selectedObj && selectedObj.key === deleteTarget.key) closeDetail();
+      deleteTarget = null;
+      loadObjects();
+    } else if (r.status === 404) { showModalError('delError','Object not found.'); }
+    else if (r.status === 403) { showModalError('delError','No delete permission.'); }
+    else { showModalError('delError',`Error (${r.status}).`); }
+  } catch { showModalError('delError','Connection error.'); }
+  document.getElementById('delBtn').disabled = false;
+  document.getElementById('delBtn').textContent = 'Delete';
+}
+
+// ─── Keyboard ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
+    if (!document.querySelector('.modal-backdrop.show')) closeDetail();
+  }
+  if (e.key === 'Delete' && selectedObj && !document.querySelector('.modal-backdrop.show')) {
+    openDeleteModal(selectedObj);
+  }
+});
+</script>
+</body>
+</html>
+ENDOFFILE
