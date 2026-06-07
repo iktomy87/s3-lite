@@ -62,4 +62,4 @@ export const Topbar: React.FC<TopBarProps> = ({
 };
 
 
-
+export default Topbar;
