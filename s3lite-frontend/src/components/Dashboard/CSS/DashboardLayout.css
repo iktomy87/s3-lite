@@ -1,0 +1,22 @@
+/* ── Layout Shell ────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  height: 100vh;
+  padding: 14px;
+  gap: 0;
+}
+.app-frame {
+  flex: 1;
+  display: flex;
+  border-radius: var(--r3);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: var(--surface);
+  min-width: 0;
+}
+
+/* ── Main ────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── Content Area ────────────────────────────────────────────── */
+.content-area { flex: 1; display: flex; overflow: hidden; }

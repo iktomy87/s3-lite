@@ -1,0 +1,383 @@
+/* ── File Browser ────────────────────────────────────────────── */
+.file-browser {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Quick Access */
+.quick-access-bar {
+    padding: 16px 20px 0;
+    background: #fafbff;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.qa-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.qa-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.qa-cards {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+}
+
+.qa-cards::-webkit-scrollbar {
+    height: 0;
+}
+
+.qa-card {
+    min-width: 140px;
+    max-width: 165px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r2);
+    padding: 14px 15px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all .15s;
+    user-select: none;
+}
+
+.qa-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px var(--accent-glow);
+    transform: translateY(-1px);
+}
+
+.qa-icon-wrap {
+    width: 34px;
+    height: 34px;
+    background: var(--accent-dim);
+    border-radius: var(--r);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.qa-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.qa-meta {
+    font-size: 11px;
+    color: var(--text3);
+}
+
+/* File list header */
+.file-header {
+    padding: 11px 20px 9px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.breadcrumb {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.breadcrumb span {
+    color: var(--text2);
+    cursor: pointer;
+    transition: color .1s;
+}
+
+.breadcrumb span:hover {
+    color: var(--accent);
+}
+
+.breadcrumb .bc-current {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.bc-sep {
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-check {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    user-select: none;
+}
+
+.filter-check input {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.filter-input-wrap {
+    position: relative;
+}
+
+.filter-input-wrap svg {
+    position: absolute;
+    left: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.filter-input {
+    padding: 5px 8px 5px 24px;
+    border-radius: var(--r);
+    border: 1.5px solid var(--border);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface2);
+    outline: none;
+    width: 110px;
+    transition: all .15s;
+}
+
+.filter-input:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+}
+
+/* File Table */
+.file-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.file-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.file-scroll::-webkit-scrollbar-thumb {
+    background: var(--border2);
+    border-radius: 2px;
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 8px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.file-table th.sortable {
+    cursor: pointer;
+}
+
+.file-table th.sortable:hover {
+    color: var(--accent);
+}
+
+.th-arrow {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 3px;
+    vertical-align: middle;
+    opacity: .5;
+}
+
+.file-table td {
+    padding: 9px 20px;
+    border-bottom: 1px solid #f3f4f8;
+    vertical-align: middle;
+}
+
+.file-table tr {
+    transition: background .08s;
+    cursor: pointer;
+}
+
+.file-table tr:hover td {
+    background: #f8f9fd;
+}
+
+.file-table tr.selected td {
+    background: var(--accent-dim);
+}
+
+.file-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cell-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.cell-name .fname {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-table tr.selected .fname {
+    font-weight: 600;
+}
+
+.badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+}
+
+.badge-blue {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge-red {
+    background: #fef2f2;
+    color: var(--danger);
+}
+
+.badge-green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.cell-sharing {
+    font-size: 12.5px;
+    color: var(--text2);
+    white-space: nowrap;
+}
+
+.cell-size {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+
+.cell-date {
+    font-size: 12.5px;
+    color: var(--text2);
+    white-space: nowrap;
+}
+
+.cell-actions {
+    text-align: right;
+}
+
+.row-actions {
+    display: flex;
+    gap: 2px;
+    justify-content: flex-end;
+    opacity: 0;
+    transition: opacity .1s;
+}
+
+tr:hover .row-actions,
+tr.selected .row-actions {
+    opacity: 1;
+}
+
+.act-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background .1s;
+}
+
+.act-btn:hover {
+    background: var(--surface3);
+}
+
+.act-btn.danger:hover {
+    background: #fef2f2;
+}
+
+/* File icon colors */
+.fi-folder {
+    color: #4169e1;
+}
+
+.fi-image {
+    color: #f59e0b;
+}
+
+.fi-code {
+    color: #10b981;
+}
+
+.fi-text {
+    color: #6b7280;
+}
+
+.fi-pdf {
+    color: #ef4444;
+}
+
+.fi-doc {
+    color: #3b82f6;
+}
+
+.fi-archive {
+    color: #f97316;
+}
+
+.fi-file {
+    color: #9ca3af;
+}
