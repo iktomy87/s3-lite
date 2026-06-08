@@ -4,23 +4,29 @@ export const getAuthToken = () => localStorage.getItem('token');
 export const setAuthToken = (token: string) => localStorage.setItem('token', token);
 export const removeAuthToken = () => localStorage.removeItem('token');
 
+export const getUsername = () => localStorage.getItem('username') || 'Usuario';
+export const setUsername = (username: string) => localStorage.setItem('username', username);
+export const removeUsername = () => localStorage.removeItem('username');
+
 interface FetchOptions extends RequestInit {
   data?: any;
 }
 
 export const apiClient = async (endpoint: string, options: FetchOptions = {}) => {
-  const { data, headers: customHeaders, ...customConfig } = options;
+  const { data, headers: customHeaders, body: customBody, ...customConfig } = options;
   const token = getAuthToken();
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+  const isFormDataOrFile = data instanceof FormData || data instanceof File || data instanceof Blob;
+
+  const headers: any = {
+    ...(isFormDataOrFile ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...customHeaders,
+    ...(customHeaders as any),
   };
 
   const config: RequestInit = {
-    method: data ? 'POST' : 'GET',
-    body: data ? JSON.stringify(data) : undefined,
+    method: data || customBody ? (options.method || 'POST') : (options.method || 'GET'),
+    body: customBody ? customBody : (data ? (isFormDataOrFile ? data : JSON.stringify(data)) : undefined),
     headers,
     ...customConfig,
   };

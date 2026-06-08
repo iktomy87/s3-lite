@@ -25,6 +25,9 @@ export const LoginForm: React.FC = () => {
 
       if (response && response.token) {
         setAuthToken(response.token);
+        if (response.username) {
+          import('../../api').then(m => m.setUsername(response.username));
+        }
         navigate('/home');
       }
     } catch (err: any) {

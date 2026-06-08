@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/Dashboard/DashboardLayout';
 import { Sidebar } from '../components/Dashboard/Sidebar';
 import { Topbar } from '../components/Dashboard/Topbar';
@@ -9,26 +9,64 @@ import { BucketModal } from '../components/Dashboard/BucketModal';
 import { UploadModal } from '../components/Dashboard/UploadModal';
 import { DeleteModal } from '../components/Dashboard/DeleteModal';
 import { ToastContainer, ToastProps } from '../components/Dashboard/ToastContainer';
+import { getUsername, apiClient, removeAuthToken, removeUsername } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'versions'>('activity');
     const [currentBucket, setCurrentBucket] = useState('');
+    const [buckets, setBuckets] = useState<any[]>([]);
 
     // Modals state
     const [isCreateBucketOpen, setIsCreateBucketOpen] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [toasts, setToasts] = useState<ToastProps[]>([]);
+    const navigate = useNavigate();
 
-    const handleCreateBucket = (name: string) => {
-        console.log("Create bucket", name);
-        setIsCreateBucketOpen(false);
+    const fetchBuckets = async () => {
+        try {
+            const data = await apiClient('/buckets');
+            if (data && Array.isArray(data)) {
+                setBuckets(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch buckets", err);
+        }
     };
 
-    const handleUpload = (file: File, key: string) => {
-        console.log("Upload", file, key);
-        setIsUploadOpen(false);
+    useEffect(() => {
+        if (!currentBucket) {
+            fetchBuckets();
+        }
+    }, [currentBucket]);
+
+    const handleCreateBucket = async (name: string) => {
+        try {
+            await apiClient(`/buckets/${name}`, { method: 'PUT' });
+            setIsCreateBucketOpen(false);
+            setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Success', message: 'Bucket created!', type: 'success' }]);
+            fetchBuckets();
+        } catch (err: any) {
+            setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: err.message, type: 'error' }]);
+        }
+    };
+
+    const handleUpload = async (file: File, key: string) => {
+        try {
+            await apiClient(`/storage/${currentBucket}/${key}`, {
+                method: 'PUT',
+                data: file,
+                headers: { 'Content-Type': 'application/octet-stream' }
+            });
+            setIsUploadOpen(false);
+            setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Success', message: 'File uploaded successfully!', type: 'success' }]);
+            // Trigger refresh logic if needed
+            fetchBuckets(); // If it affects buckets or just objects
+        } catch (err: any) {
+            setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: err.message, type: 'error' }]);
+        }
     };
 
     const handleDelete = () => {
@@ -36,22 +74,28 @@ export const Dashboard: React.FC = () => {
         setIsDeleteOpen(false);
     };
 
+    const handleLogout = () => {
+        removeAuthToken();
+        removeUsername();
+        navigate('/login');
+    };
+
     const sidebar = (
         <Sidebar
-            userName="John Doe"
-            storageUsedGB={42}
-            storageTotalGB={256}
+            userName={getUsername()}
+            storageUsedGB={0}
+            storageTotalGB={10}
             onExploreBucket={(name) => setCurrentBucket(name)}
-            onLogout={() => { setCurrentBucket(''); console.log('Logout'); }}
+            onLogout={handleLogout}
         />
     );
 
     const topbar = (
         <Topbar
-            onFiles={() => console.log('Files clicked')}
+            onFiles={() => setCurrentBucket('')}
             onActivities={() => console.log('Activities clicked')}
             onSearch={(q) => console.log('Search', q)}
-            onRefresh={() => console.log('Refresh')}
+            onRefresh={() => currentBucket ? console.log("refresh objects") : fetchBuckets()}
             onUpload={() => setIsUploadOpen(true)}
             onCreateBucket={() => setIsCreateBucketOpen(true)}
             showUpload={!!currentBucket}
@@ -67,17 +111,22 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div className="qa-cards" id="qaCards">
                     <div className="empty-state" style={{ padding: '8px 0 4px', alignItems: 'flex-start', gap: '4px' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--text3)' }}>Enter a bucket name to explore it</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text3)' }}>
+                            {currentBucket ? `Browsing bucket: ${currentBucket}` : 'Select a bucket to explore it'}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <FileList
-                onAllVersions={() => { }}
-                onFilter={() => { }}
-                onRefresh={() => { }}
-            />
-            <BucketsTable />
+            {currentBucket ? (
+                <FileList
+                    onAllVersions={() => { }}
+                    onFilter={() => { }}
+                    onRefresh={() => { }}
+                />
+            ) : (
+                <BucketsTable buckets={buckets} onBucketClick={(name) => setCurrentBucket(name)} />
+            )}
         </div>
     );
 

@@ -32,6 +32,9 @@ export const RegisterForm: React.FC = () => {
 
       if (response && response.token) {
         setAuthToken(response.token);
+        if (response.username) {
+          import('../../api').then(m => m.setUsername(response.username));
+        }
         navigate('/home');
       }
     } catch (err: any) {
@@ -142,7 +145,9 @@ export const RegisterForm: React.FC = () => {
                 <label className="rp-checkbox-label" htmlFor="reg-terms">I agree to the Terms & Privacy</label>
               </div>
 
-              <button type="submit" className="rp-btn-primary">Sign up</button>
+              <button type="submit" className="rp-btn-primary" disabled={loading}>
+                {loading ? 'Creating account...' : 'Sign up'}
+              </button>
             </form>
             <p className="rp-login-text">
               Already have an account? <a href="/login">Sign in instead</a>

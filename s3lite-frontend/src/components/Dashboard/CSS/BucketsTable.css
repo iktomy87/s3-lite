@@ -40,7 +40,7 @@
 }
 
 .file-table th.sortable:hover {
-    color: var(--accent);
+    color: #E34C00;
 }
 
 .th-arrow {

@@ -32,9 +32,9 @@
 }
 
 .tab-btn.active {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-    color: var(--accent);
+    border-color: #E34C00;
+    background: #ffeade;
+    color: #E34C00;
     font-weight: 600;
 }
 
@@ -65,7 +65,7 @@
 }
 
 .search-wrap input:focus {
-    border-color: var(--accent);
+    border-color: #E34C00;
     background: var(--surface);
 }
 
@@ -113,7 +113,7 @@
     gap: 6px;
     padding: 7px 16px;
     border-radius: var(--r);
-    background: var(--accent);
+    background: #ff8400;
     color: #fff;
     border: none;
     font-size: 13px;
@@ -124,5 +124,5 @@
 }
 
 .btn-primary:hover {
-    background: var(--accent2);
+    background: #E34C00;
 }

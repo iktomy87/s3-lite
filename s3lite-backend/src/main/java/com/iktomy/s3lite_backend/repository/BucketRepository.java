@@ -14,4 +14,6 @@ public interface BucketRepository extends JpaRepository<Bucket, UUID> {
     Optional<Bucket> findByName(String name);
 
     boolean existsByName(String name);
+
+    java.util.List<Bucket> findByOwnerId(UUID ownerId);
 }

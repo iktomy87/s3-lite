@@ -43,6 +43,12 @@ public class BucketService {
         return new BucketResponse(bucket.getId(), bucket.getName(), bucket.getOwnerId(), bucket.getCreatedAt());
     }
 
+    public List<BucketResponse> listUserBuckets(User owner) {
+        return bucketRepository.findByOwnerId(owner.getId()).stream()
+                .map(bucket -> new BucketResponse(bucket.getId(), bucket.getName(), bucket.getOwnerId(), bucket.getCreatedAt()))
+                .toList();
+    }
+
     public ObjectListResponse listObjects(String bucketName, String prefix, boolean allVersions) {
         if (!bucketRepository.existsByName(bucketName)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,

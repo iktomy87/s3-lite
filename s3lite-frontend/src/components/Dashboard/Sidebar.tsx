@@ -34,16 +34,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="logo-mark">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-            <ellipse cx="12" cy="5" rx="9" ry="3" stroke="#fff" strokeWidth="1.8" />
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" stroke="#fff" strokeWidth="1.8" />
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" stroke="#fff" strokeWidth="1.8" />
-          </svg>
-        </div>
         <div>
-          <div className="logo-name">S3-Lite</div>
-          <div className="logo-ver">v2.0.0</div>
+          <div className="logo-name">
+            <img src="https://i.imgur.com/06lxh6r.png" style={{ width: '100px' }} />
+          </div>
         </div>
       </div>
 

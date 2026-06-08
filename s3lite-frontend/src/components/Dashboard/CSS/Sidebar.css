@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 18px 18px 16px;
+    padding: 18px 10px 5px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -64,7 +64,7 @@
 }
 
 .bucket-form input:focus {
-    border-color: var(--accent);
+    border-color: #E34C00;
 }
 
 .bucket-form button {
@@ -76,10 +76,12 @@
     display: flex;
     align-items: center;
     transition: background .15s;
+    background-color: #ff8400;
 }
 
 .bucket-form button:hover {
     background: var(--accent2);
+    background-color: #E34C00;
 }
 
 .nav {
@@ -109,12 +111,12 @@
 
 .nav-item:hover {
     background: var(--surface2);
-    color: var(--text);
+    color: #E34C00;
 }
 
 .nav-item.active {
-    background: var(--accent-dim);
-    color: var(--accent);
+    background: #ffeade;
+    color: #E34C00;
     font-weight: 600;
 }
 

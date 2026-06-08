@@ -109,7 +109,7 @@
 }
 
 .breadcrumb span:hover {
-    color: var(--accent);
+    color: #E34C00;
 }
 
 .breadcrumb .bc-current {
@@ -170,7 +170,7 @@
 }
 
 .filter-input:focus {
-    border-color: var(--accent);
+    border-color: #E34C00;
     background: var(--surface);
 }
 
@@ -216,7 +216,7 @@
 }
 
 .file-table th.sortable:hover {
-    color: var(--accent);
+    color: #E34C00;
 }
 
 .th-arrow {

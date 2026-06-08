@@ -31,6 +31,13 @@ public class BucketController implements BucketsApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @org.springframework.web.bind.annotation.GetMapping("/api/buckets")
+    public ResponseEntity<java.util.List<BucketResponse>> listUserBuckets() {
+        AuthenticatedUser principal = getAuthenticatedUser();
+        User owner = authService.getUserById(principal.userId());
+        return ResponseEntity.ok(bucketService.listUserBuckets(owner));
+    }
+
     @Override
     public ResponseEntity<ObjectListResponse> listObjects(
             String bucketName,
