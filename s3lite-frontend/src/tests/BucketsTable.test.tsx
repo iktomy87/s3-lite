@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import BucketsTable from './BucketsTable';
+import BucketsTable from '../components/Dashboard/BucketsTable';
 
 describe('BucketsTable Component', () => {
   const mockBuckets = [

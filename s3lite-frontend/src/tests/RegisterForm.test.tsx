@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import RegisterForm from './RegisterForm';
-import { apiClient, setAuthToken } from '../../api';
+import RegisterForm from '../components/RegisterPage/RegisterForm';
+import { apiClient, setAuthToken } from '../api';
 
-jest.mock('../../api', () => ({
+jest.mock('../api', () => ({
   apiClient: jest.fn(),
   setAuthToken: jest.fn(),
   setUsername: jest.fn(),
