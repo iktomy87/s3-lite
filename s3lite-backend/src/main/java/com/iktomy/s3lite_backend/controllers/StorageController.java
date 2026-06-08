@@ -30,6 +30,7 @@ public class StorageController implements StorageApi {
     @Override
     public ResponseEntity<org.springframework.core.io.Resource> downloadObject(String bucketName, String objectKey,
             Long versionId) {
+        authService.requireReadAccess(getAuthenticatedUser().username(), bucketName);
         // Buscamos los metadatos para conocer el tipo
         ObjectMetadata metadata = metadataService.getMetadata(bucketName, objectKey, versionId);
         // pedimos el archivo fisico al servicio de datos
@@ -45,6 +46,7 @@ public class StorageController implements StorageApi {
     @Override
     public ResponseEntity<ObjectMetadata> uploadObject(String bucketName, String objectKey,
             org.springframework.core.io.Resource body) {
+        authService.requireWriteAccess(getAuthenticatedUser().username(), bucketName);
         try {
             InputStream fileStream = body.getInputStream();
             long fileSize = body.contentLength();
@@ -66,6 +68,7 @@ public class StorageController implements StorageApi {
 
     @Override
     public ResponseEntity<Void> deleteObject(String bucketName, String objectKey, Long versionId) {
+        authService.requireWriteAccess(getAuthenticatedUser().username(), bucketName);
         if (versionId != null) {
             metadataService.softDeleteSpecificVersion(bucketName, objectKey, versionId);
         } else {
@@ -73,5 +76,16 @@ public class StorageController implements StorageApi {
         }
 
         return ResponseEntity.noContent().build();
+    }
+
+    private com.iktomy.s3lite_backend.config.JwtAuthenticationFilter.AuthenticatedUser getAuthenticatedUser() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof com.iktomy.s3lite_backend.config.JwtAuthenticationFilter.AuthenticatedUser au)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Full authentication is required.");
+        }
+        return au;
     }
 }

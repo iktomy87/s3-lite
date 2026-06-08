@@ -1,9 +1,9 @@
 # Documento de Especificación de Requisitos (ERP)
 
 **Proyecto:** S3-Lite
-**Versión:** 2.0.0
-**Fecha:** 2025-07-11
-**Estado:** Revisado — Alineado con pautas de diseño HLD
+**Versión:** 2.1.0
+**Fecha:** 2026-06-07
+**Estado:** Revisado — Autenticación JWT implementada
 **Enfoque Principal:** Infraestructura como Código y Validación CI/CD
 
 ---
@@ -12,7 +12,8 @@
 
 | Versión | Fecha | Descripción |
 | :--- | :--- | :--- |
-| **2.0.0** | 2025-07-11 | Revisión completa: incorporación de Auth Service (IAM) y entidad `User`; `Bucket` como entidad explícita con creación previa obligatoria; versionado de objetos (RF-06); endpoint de eliminación (RF-04); listado por prefijo (RF-05); metadata de usuario como pares clave-valor (RF-07, tabla `object_metadata`); `key` de objeto como string tipo path; nuevos RNF de atomicidad, unicidad y tests de seguridad. Alineado con pautas de diseño HLD. |
+| **2.1.0** | 2026-06-07 | Migración de HTTP Basic a **JWT (JSON Web Token)**: endpoints públicos `POST /api/auth/register` y `POST /api/auth/login`; campo `email` añadido a la entidad `User`; `OncePerRequestFilter` para validar tokens JWT en cabecera `Authorization: Bearer <token>`; sesiones stateless; CORS habilitado; protección de recursos por ownership (el usuario solo opera sobre sus propios buckets). **Frontend (React):** integración de Login/Register con la API; almacenamiento seguro del JWT; interceptor HTTP automático para cabeceras `Authorization`; ruta protegida para Dashboard; RF-10 añadido. |
+| 2.0.0 | 2025-07-11 | Revisión completa: incorporación de Auth Service (IAM) y entidad `User`; `Bucket` como entidad explícita con creación previa obligatoria; versionado de objetos (RF-06); endpoint de eliminación (RF-04); listado por prefijo (RF-05); metadata de usuario como pares clave-valor (RF-07, tabla `object_metadata`); `key` de objeto como string tipo path; nuevos RNF de atomicidad, unicidad y tests de seguridad. Alineado con pautas de diseño HLD. |
 | 1.0.0 | — | Versión inicial. Solo upload/download. Sin versionado, sin creación explícita de bucket, sin auth, sin eliminación, sin listado. |
 
 ---
@@ -31,7 +32,11 @@ La filosofía principal es mantener el alcance de la aplicación **estrictamente
 - Versionado de objetos: la misma key genera una nueva versión, nunca sobrescritura.
 - Listado de objetos en un bucket filtrado por prefijo de key.
 - Metadata de objeto como pares clave-valor definidos por el usuario.
-- Autenticación y autorización básica (IAM simplificado).
+- Autenticación y autorización basada en JWT (IAM simplificado).
+- Registro e inicio de sesión de usuarios con endpoints públicos.
+- Protección de recursos por ownership: un usuario solo opera sobre sus propios buckets.
+- Interfaz gráfica de usuario (SPA) con React + TypeScript.
+- Integración del frontend con los endpoints de autenticación JWT.
 - Documentación de API vía OpenAPI 3.0.x (Swagger UI + Scalar UI).
 - Contenerización con Docker multi-stage.
 - Pipeline de CI/CD con validación de cobertura de pruebas.
@@ -39,7 +44,6 @@ La filosofía principal es mantener el alcance de la aplicación **estrictamente
 ### 1.2 Fuera de Alcance
 
 - Compatibilidad con clientes nativos de AWS (AWS CLI, firmas SigV4).
-- Interfaz gráfica de usuario (GUI) propia.
 - Procesamiento distribuido, replicación de nodos o clustering.
 - Paginación avanzada con cursores (solo filtrado por prefijo).
 - Gestión de roles y políticas complejas (IAM avanzado).
@@ -57,7 +61,12 @@ La filosofía principal es mantener el alcance de la aplicación **estrictamente
 | **Almacenamiento Físico** | `java.nio.file` sobre sistema de archivos local montado en volumen |
 | **Documentación API** | OpenAPI 3.0.x (Swagger UI + Scalar UI) |
 | **Contenerización** | Docker (Multi-stage build) |
-| **Seguridad** | Spring Security 6.x (HTTP Basic / JWT — configurable) |
+| **Seguridad** | Spring Security 6.x + JWT (sesiones stateless, `OncePerRequestFilter`) |
+| **Cifrado de Contraseñas** | BCrypt (`BCryptPasswordEncoder`) |
+| **Librería JWT** | `io.jsonwebtoken:jjwt` (JJWT) |
+| **Frontend** | React 19 + TypeScript |
+| **Enrutamiento (Frontend)** | React Router DOM 7.x |
+| **Cliente HTTP (Frontend)** | `fetch` API nativa con interceptor JWT |
 
 ---
 
@@ -72,7 +81,7 @@ El **API Service** actúa como punto de entrada central que orquesta internament
 | Servicio | Responsabilidad |
 | :--- | :--- |
 | **API Service** | Punto de entrada REST. Recibe peticiones HTTP, orquesta los demás servicios y devuelve respuestas al cliente. Generado a partir del contrato OpenAPI (API-First). |
-| **Auth Service (IAM)** | Autentica la identidad del cliente (¿quién es?) y autoriza la operación (¿puede hacerlo?). Consultado por el API Service antes de cualquier operación sobre recursos. |
+| **Auth Service (IAM)** | Gestiona el registro y login de usuarios. Genera y valida tokens JWT. El `JwtAuthenticationFilter` (`OncePerRequestFilter`) intercepta cada petición, extrae el JWT de la cabecera `Authorization: Bearer <token>`, valida su autenticidad e inyecta la identidad del usuario en el `SecurityContext` de Spring. |
 | **Metadata Service** | Lee y escribe metadatos de buckets y objetos en la base de datos relacional. Gestiona también los pares clave-valor de metadata definidos por el usuario. |
 | **Data Service** | Lee y escribe el payload binario de los objetos en el sistema de archivos local a través de `StorageProvider` / `FileSystemStorageProvider` usando `java.nio.file`. |
 
@@ -105,25 +114,31 @@ El sistema gestiona tres entidades principales de dominio:
 
 ### 3.3 Flujos Principales
 
+#### 3.3.0 Registro y Login (Flujo Público)
+
+1. **Registro:** El cliente envía `POST /api/auth/register` con `username`, `email` y `password`. El **Auth Service** valida unicidad de `username` y `email`, encripta la contraseña con BCrypt, persiste el `User` en la base de datos y retorna `201 Created`.
+2. **Login:** El cliente envía `POST /api/auth/login` con `username` y `password`. El **Auth Service** valida las credenciales contra la base de datos. Si son correctas, genera un JWT firmado (con `userId` y `username` como claims) y lo retorna al cliente en el cuerpo de la respuesta.
+3. **Uso del Token:** Para todas las peticiones protegidas, el cliente incluye la cabecera `Authorization: Bearer <token>`. El `JwtAuthenticationFilter` intercepta la petición, valida el token y establece el `SecurityContext`.
+
 #### 3.3.1 Creación de Bucket
 
-1. El cliente envía `HTTP PUT /api/buckets/{bucketName}`.
-2. El **API Service** llama al **Auth Service** para autenticar al cliente y verificar que tiene permiso para crear buckets.
-3. Un bucket es únicamente metadata. Tras la autenticación exitosa, el **API Service** llama al **Metadata Service** para insertar una nueva fila en la tabla `buckets` de la base de datos.
+1. El cliente envía `HTTP PUT /api/buckets/{bucketName}` con cabecera `Authorization: Bearer <token>`.
+2. El `JwtAuthenticationFilter` valida el token JWT e inyecta la identidad del usuario en el `SecurityContext`.
+3. Un bucket es únicamente metadata. El **API Service** llama al **Metadata Service** para insertar una nueva fila en la tabla `buckets` con el `ownerId` del usuario autenticado.
 4. El **API Service** retorna `201 Created` al cliente.
 
 #### 3.3.2 Carga de Objeto (Upload)
 
-1. Con el bucket creado, el cliente envía `HTTP PUT /api/storage/{bucketName}/{objectKey}`.
-2. El **API Service** llama al **Auth Service** para autenticar al cliente y verificar que tiene permiso de escritura (`write`) sobre el bucket.
-3. Tras la autenticación, el **API Service** reenvía el payload del cliente al **Data Service**, que persiste el payload como un nuevo objeto y retorna su `id` al **API Service**.
+1. Con el bucket creado, el cliente envía `HTTP PUT /api/storage/{bucketName}/{objectKey}` con cabecera `Authorization: Bearer <token>`.
+2. El `JwtAuthenticationFilter` valida el token JWT. El **API Service** verifica que el `ownerId` del bucket coincide con el `userId` del token. Si no coincide: `403 Forbidden`.
+3. Tras la autorización, el **API Service** reenvía el payload del cliente al **Data Service**, que persiste el payload como un nuevo objeto y retorna su `id` al **API Service**.
 4. El **API Service** llama al **Metadata Service** para insertar una nueva fila en la tabla `objects`. Si ya existe un objeto con la misma `key`, se crea una nueva versión con `versionId` incremental; **no se sobrescribe el objeto anterior**.
 5. El **API Service** retorna `201 Created` al cliente junto al header `X-Version-Id`.
 
 #### 3.3.3 Descarga de Objeto (Download)
 
-1. Con el bucket y objeto existentes, el cliente envía `HTTP GET /api/storage/{bucketName}/{objectKey}` (opcionalmente con `?versionId=N`).
-2. El **API Service** llama al **Auth Service** para autenticar al cliente y verificar que tiene permiso de lectura (`read`) sobre el bucket.
+1. Con el bucket y objeto existentes, el cliente envía `HTTP GET /api/storage/{bucketName}/{objectKey}` (opcionalmente con `?versionId=N`) con cabecera `Authorization: Bearer <token>`.
+2. El `JwtAuthenticationFilter` valida el token JWT. El **API Service** verifica que el `ownerId` del bucket coincide con el `userId` del token. Si no coincide: `403 Forbidden`.
 3. Dado que el cliente envía la `key` del objeto (no su `id` interno), el **API Service** debe primero resolver la `key` a su `id`. Por ello llama al **Metadata Service** para consultar la tabla `objects` y obtener el `id` del objeto. **Nota:** en el flujo de descarga se visita el Metadata Service _antes_ que el Data Service, a diferencia del flujo de carga.
 4. Con el `id` del objeto resuelto, el **API Service** lo envía al **Data Service**, que responde con el stream binario del payload.
 5. El **API Service** retorna `200 OK` al cliente con el payload como stream, junto al `Content-Type` y `Content-Length` correctos.
@@ -141,8 +156,9 @@ El sistema gestiona tres entidades principales de dominio:
 | **RF-05** | **Listado por Prefijo** | El sistema debe permitir listar objetos de un bucket mediante `GET /api/buckets/{bucketName}/objects?prefix={prefix}`. Sin prefijo, lista todos los objetos (última versión de cada key). | Retorna `200 OK` con array JSON de objetos que incluye: `key`, `versionId`, `sizeInBytes`, `mimeType`, `createdAt`. Retorna solo la versión más reciente de cada key salvo que se indique `?allVersions=true`. | API, Auth, Metadata | 🆕 NUEVO |
 | **RF-06** | **Versionado de Objetos** | Subir un objeto con una key que ya existe en el mismo bucket **no debe sobrescribir** el objeto anterior. Debe crear una nueva versión con `versionId` auto-incremental. Ambas versiones deben ser accesibles y descargables de forma independiente. | `GET /{bucket}/{key}` sin `versionId` retorna la versión más reciente. `GET` con `?versionId=1` retorna la primera versión. La tabla `objects` debe contener ambas filas con el mismo `bucketId` y `key` pero distinto `versionId`. | API, Metadata, Data | 🆕 NUEVO |
 | **RF-07** | **Metadata de Usuario** | Por cada objeto subido, el cliente puede incluir metadata personalizada como pares clave-valor arbitrarios en los headers de la petición (prefijo `x-amz-meta-`). Esta metadata se almacena en una tabla separada del payload y de los metadatos del sistema. | La consulta a la tabla `object_metadata` debe reflejar exactamente los pares enviados. La descarga de un objeto debe incluir los headers de metadata en la respuesta. Los campos del sistema (`sizeInBytes`, `mimeType`, etc.) son independientes de la metadata de usuario. | API, Metadata | 🆕 NUEVO |
-| **RF-08** | **Autenticación y Autorización (IAM)** | El sistema debe autenticar cada petición antes de ejecutar cualquier operación sobre recursos. Debe verificar que el usuario autenticado tiene el permiso necesario sobre el recurso (`read`/`write` sobre un bucket específico). | Sin credenciales: `401 Unauthorized`. Credenciales válidas sin permiso: `403 Forbidden`. Todas las operaciones RF-01 a RF-07 deben fallar con `401`/`403` ante credenciales inválidas o ausentes. El pipeline CI debe incluir tests de seguridad para estos casos. | Auth, API | 🆕 NUEVO |
+| **RF-08** | **Autenticación y Autorización (JWT)** | El sistema debe implementar un flujo completo basado en JWT: **Registro** (`POST /api/auth/register`) con encriptación BCrypt; **Login** (`POST /api/auth/login`) con generación de JWT firmado; **Filtro de autorización** (`JwtAuthenticationFilter`, `OncePerRequestFilter`) que intercepta cada petición protegida, extrae el JWT de `Authorization: Bearer <token>`, valida su autenticidad e inyecta la identidad en el `SecurityContext`. Spring Security debe configurarse como **stateless** (sin sesiones) con **CORS** habilitado. | Sin token o token inválido: `401 Unauthorized`. Token válido pero el usuario no es dueño del bucket: `403 Forbidden`. Los endpoints `/api/auth/**` son públicos (sin autenticación). Todas las operaciones RF-01 a RF-07 deben fallar con `401`/`403` ante tokens inválidos, expirados o ausentes. | Auth, API | ✏️ MODIFICADO |
 | **RF-09** | **Documentación y Testing vía OpenAPI** | La API debe generarse a partir de un contrato OpenAPI usando `openapi-generator-maven-plugin` (API-First). La documentación debe estar accesible desde Swagger UI y Scalar UI. | Ambas UIs deben listar todos los endpoints RF-01 a RF-08 con sus modelos de request/response, permitir ejecutar peticiones reales y mostrar los códigos de respuesta esperados. | API | ✅ EXISTENTE |
+| **RF-10** | **Integración Frontend (React)** | El frontend debe implementar: **Integración de UI:** conectar el componente de Login existente con `POST /api/auth/login` y el de Register con `POST /api/auth/register`. **Gestión de Estado:** almacenar el JWT en `localStorage` tras un login exitoso; decodificar el payload del token para obtener el `username` del usuario autenticado; exponer el estado de autenticación a toda la aplicación mediante React Context (`AuthProvider` + hook `useAuth`). **Interceptores:** configurar el cliente HTTP (`fetch`) para adjuntar automáticamente la cabecera `Authorization: Bearer <token>` en todas las peticiones a endpoints protegidos. **Rutas Protegidas:** la ruta `/home` (Dashboard) debe estar protegida por un componente `ProtectedRoute` que redirige a `/login` si no hay token válido. **Logout:** el botón de logout del Sidebar debe limpiar el JWT del almacenamiento y redirigir a `/login`. | Las contraseñas nunca deben guardarse en texto plano en la base de datos. Cualquier petición sin token válido a una ruta protegida debe devolver `401 Unauthorized`. Un usuario accediendo a un bucket ajeno debe recibir `403 Forbidden`. El flujo completo registro → login → dashboard debe funcionar sin errores. El nombre de usuario en el Sidebar debe coincidir con el usuario autenticado. | Frontend, Auth | 🆕 NUEVO |
 
 ### 4.1 Modelo de Datos
 
@@ -152,7 +168,8 @@ El sistema gestiona tres entidades principales de dominio:
 | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `uuid` | Identificador único generado automáticamente (PK) |
 | `username` | `String` | `varchar(128)` | Nombre de usuario único en el sistema |
-| `passwordHash` | `String` | `varchar(255)` | Hash de la contraseña (bcrypt) |
+| `email` | `String` | `varchar(255)` | Email del usuario — `UNIQUE` |
+| `passwordHash` | `String` | `varchar(255)` | Hash de la contraseña (BCrypt) |
 | `createdAt` | `Instant` | `timestamptz` | Fecha de creación en UTC |
 
 #### Tabla: `buckets`
@@ -195,6 +212,15 @@ Almacena la metadata definida por el usuario como pares clave-valor, independien
 
 ## 5. Referencia de Endpoints REST
 
+### 5.1 Endpoints Públicos (sin autenticación)
+
+| Método | RF | Path | Respuesta exitosa | Errores posibles |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | RF-08 | `/api/auth/register` | `201 Created` + datos del usuario | 400, 409 |
+| `POST` | RF-08 | `/api/auth/login` | `200 OK` + JWT token | 401 |
+
+### 5.2 Endpoints Protegidos (requieren `Authorization: Bearer <token>`)
+
 | Método | RF | Path | Respuesta exitosa | Errores posibles |
 | :--- | :--- | :--- | :--- | :--- |
 | `PUT` | RF-01 | `/api/buckets/{bucketName}` | `201 Created` | 400, 401, 403, 409 |
@@ -221,7 +247,7 @@ Almacena la metadata definida por el usuario como pares clave-valor, independien
 
 **RNF-05 — Cobertura mínima:** Los paquetes `*.storage.*`, `*.metadata.*` y `*.auth.*` deben mantener una cobertura de pruebas unitarias mínima del **80%**, validada automáticamente por JaCoCo. El pipeline de CI debe fallar si no se alcanza el umbral (`mvn verify`).
 
-**RNF-06 — Tests de seguridad obligatorios:** El pipeline de CI debe incluir tests que verifiquen los comportamientos `401 Unauthorized` y `403 Forbidden` para todas las operaciones RF-01 a RF-07. Estos tests deben ejecutarse como parte de `mvn verify`.
+**RNF-06 — Tests de seguridad obligatorios:** El pipeline de CI debe incluir tests que verifiquen los comportamientos `401 Unauthorized` (sin token o token inválido/expirado) y `403 Forbidden` (token válido pero usuario no es dueño del bucket) para todas las operaciones RF-01 a RF-07. Los tests deben cubrir también el flujo completo de registro → login → uso del token. Estos tests deben ejecutarse como parte de `mvn verify`.
 
 **RNF-07 — Código generado a partir de OpenAPI:** El plugin `openapi-generator-maven-plugin` debe utilizarse para generar las interfaces del servidor Spring Boot a partir del archivo de especificación OpenAPI (`openapi.yaml`) durante la fase de build (enfoque API-First).
 

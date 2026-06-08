@@ -19,7 +19,8 @@ info:
     ### Principios de diseño
     - **Streaming obligatorio:** Los archivos nunca se cargan completos en memoria.
     - **Versionado:** Subir un objeto con la misma key genera una nueva versión; nunca sobrescritura.
-    - **IAM simplificado:** Autenticación HTTP Basic + autorización `read`/`write` por bucket.
+    - **JWT (Bearer Token):** Registro y login públicos; todas las demás operaciones requieren `Authorization: Bearer <token>`.
+    - **Ownership:** Un usuario solo puede operar sobre los buckets que le pertenecen.
     - **API-First:** Generada a partir de este contrato con `openapi-generator-maven-plugin`.
   license:
     name: MIT
@@ -29,17 +30,132 @@ servers:
   - url: http://localhost:8080
     description: Entorno de desarrollo local
 
-# ── Seguridad global (HTTP Basic — RF-08) ──
+# ── Seguridad global (JWT Bearer — RF-08) ──
 security:
-  - basicAuth: []
+  - bearerAuth: []
+
 
 tags:
+  - name: Auth
+    description: Registro e inicio de sesión de usuarios (endpoints públicos)
   - name: Buckets
     description: Gestión de buckets (contenedores lógicos)
   - name: Storage
     description: Operaciones de almacenamiento, recuperación y eliminación de objetos
 
 paths:
+
+  # ══════════════════════════════════════════════
+  #  AUTH (Endpoints Públicos — RF-08)
+  # ══════════════════════════════════════════════
+
+  /api/auth/register:
+
+    # ── RF-08: Registro de Usuario ──
+    post:
+      tags:
+        - Auth
+      operationId: registerUser
+      summary: Registrar un nuevo usuario
+      description: |
+        Crea una nueva cuenta de usuario en el sistema. La contraseña se
+        encripta con BCrypt antes de persistirse. El `username` y el `email`
+        deben ser únicos en el sistema.
+
+        Este endpoint es **público** (no requiere autenticación).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              username: "johndoe"
+              email: "john@example.com"
+              password: "SecurePass123!"
+      responses:
+        '201':
+          description: Usuario registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                username: "johndoe"
+                email: "john@example.com"
+                createdAt: "2026-06-07T20:00:00Z"
+        '400':
+          description: Datos de registro inválidos (campos vacíos, email malformado, etc.).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 400
+                error: "Bad Request"
+                message: "Username, email, and password are required."
+                timestamp: "2026-06-07T20:00:00Z"
+        '409':
+          description: El username o email ya están registrados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 409
+                error: "Conflict"
+                message: "Username 'johndoe' is already taken."
+                timestamp: "2026-06-07T20:00:00Z"
+
+  /api/auth/login:
+
+    # ── RF-08: Login de Usuario ──
+    post:
+      tags:
+        - Auth
+      operationId: loginUser
+      summary: Iniciar sesión y obtener un JWT
+      description: |
+        Valida las credenciales del usuario contra la base de datos.
+        Si son correctas, genera y devuelve un JSON Web Token (JWT) firmado
+        que el cliente debe incluir en la cabecera `Authorization: Bearer <token>`
+        para todas las peticiones protegidas.
+
+        Este endpoint es **público** (no requiere autenticación).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: "johndoe"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: Login exitoso. Retorna el JWT generado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                username: "johndoe"
+                expiresIn: 86400
+        '401':
+          description: Credenciales inválidas (username o password incorrectos).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 401
+                error: "Unauthorized"
+                message: "Invalid username or password."
+                timestamp: "2026-06-07T20:00:00Z"
 
   # ══════════════════════════════════════════════
   #  BUCKETS
@@ -354,17 +470,19 @@ components:
 
   # ── Esquemas de seguridad ──
   securitySchemes:
-    basicAuth:
+    bearerAuth:
       type: http
-      scheme: basic
+      scheme: bearer
+      bearerFormat: JWT
       description: |
-        Autenticación HTTP Basic. El usuario y contraseña deben corresponder
-        a un `User` registrado en el sistema (RF-08).
+        Autenticación mediante JSON Web Token (JWT). El cliente debe obtener
+        un token a través de `POST /api/auth/login` e incluirlo en la cabecera
+        `Authorization: Bearer <token>` para todas las peticiones protegidas.
 
   # ── Respuestas reutilizables ──
   responses:
     Unauthorized:
-      description: Credenciales ausentes o inválidas.
+      description: Token JWT ausente, inválido o expirado.
       content:
         application/json:
           schema:
@@ -372,10 +490,10 @@ components:
           example:
             status: 401
             error: "Unauthorized"
-            message: "Full authentication is required to access this resource."
-            timestamp: "2026-05-29T02:00:00Z"
+            message: "JWT token is missing, invalid, or expired."
+            timestamp: "2026-06-07T20:00:00Z"
     Forbidden:
-      description: El usuario autenticado no tiene permiso para realizar la operación.
+      description: El usuario autenticado no es propietario del bucket.
       content:
         application/json:
           schema:
@@ -383,8 +501,8 @@ components:
           example:
             status: 403
             error: "Forbidden"
-            message: "User does not have 'write' permission on bucket 'ci-artifacts'."
-            timestamp: "2026-05-29T02:00:00Z"
+            message: "User is not the owner of bucket 'ci-artifacts'."
+            timestamp: "2026-06-07T20:00:00Z"
 
   # ── Parámetros reutilizables ──
   parameters:
@@ -594,6 +712,103 @@ components:
           items:
             $ref: '#/components/schemas/ObjectSummary'
 
+    # ── RF-08: Esquemas de Auth ──
+    RegisterRequest:
+      type: object
+      description: Datos requeridos para registrar un nuevo usuario.
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 128
+          description: Nombre de usuario único.
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Dirección de email única del usuario.
+          example: "john@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          description: Contraseña en texto plano (se encripta con BCrypt en el servidor).
+          example: "SecurePass123!"
+
+    LoginRequest:
+      type: object
+      description: Credenciales para iniciar sesión.
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Nombre de usuario registrado.
+          example: "johndoe"
+        password:
+          type: string
+          format: password
+          description: Contraseña del usuario.
+          example: "SecurePass123!"
+
+    LoginResponse:
+      type: object
+      description: Respuesta exitosa del login con el JWT generado.
+      required:
+        - token
+        - username
+        - expiresIn
+      properties:
+        token:
+          type: string
+          description: "JSON Web Token firmado para incluir en `Authorization: Bearer <token>`."
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        username:
+          type: string
+          description: Nombre de usuario autenticado.
+          example: "johndoe"
+        expiresIn:
+          type: integer
+          format: int64
+          description: Tiempo de expiración del token en segundos.
+          example: 86400
+
+    UserResponse:
+      type: object
+      description: Datos públicos del usuario registrado (sin contraseña).
+      required:
+        - id
+        - username
+        - email
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único del usuario (PK).
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          description: Nombre de usuario.
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          description: Email del usuario.
+          example: "john@example.com"
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de registro en UTC (ISO 8601).
+          example: "2026-06-07T20:00:00Z"
+
     # Respuesta de error genérica
     ErrorResponse:
       type: object
@@ -615,4 +830,4 @@ components:
           type: string
           format: date-time
           description: Momento en que ocurrió el error (UTC).
-          example: "2026-05-29T02:15:00Z"
+          example: "2026-06-07T20:00:00Z"
