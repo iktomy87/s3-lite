@@ -1,0 +1,57 @@
+/* ── Google Fonts ────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Reset & Base ────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design Tokens ───────────────────────────────────────────── */
+:root {
+  --bg:           #eef0f6;
+  --surface:      #ffffff;
+  --surface2:     #f5f6fa;
+  --surface3:     #eef0f7;
+  --border:       #e8eaf0;
+  --border2:      #d8dbe8;
+  --accent:       #4169e1;
+  --accent2:      #2f54c7;
+  --accent-dim:   rgba(65, 105, 225, .10);
+  --accent-glow:  rgba(65, 105, 225, .22);
+  --success:      #22c55e;
+  --danger:       #ef4444;
+  --warn:         #f59e0b;
+  --text:         #141824;
+  --text2:        #5c6072;
+  --text3:        #9ba0b0;
+  --shadow:       0 2px 16px rgba(20, 24, 40, .07);
+  --shadow-lg:    0 8px 40px rgba(20, 24, 40, .13);
+  --r:            8px;
+  --r2:           12px;
+  --r3:           18px;
+  --font:         'DM Sans', sans-serif;
+  --mono:         'DM Mono', monospace;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: var(--mono);
+}

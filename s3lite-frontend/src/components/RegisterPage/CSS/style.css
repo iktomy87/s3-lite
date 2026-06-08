@@ -1,0 +1,267 @@
+/* ── Register Page — Scoped under .register-page to avoid global leaks ── */
+
+.register-page {
+    background-color: #F5F5F9;
+    color: #566a7f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Public Sans', sans-serif;
+    overflow: auto;
+}
+
+.register-page .rp-login-text a {
+    font-size: 0.85rem;
+    color: #ff8400;
+    text-decoration: none;
+    text-align: center;
+}
+
+/* Contenedor principal de dos columnas */
+.register-page .rp-container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* --- Panel Izquierdo --- */
+.register-page .rp-left-panel {
+    flex: 1;
+    padding-right: 50px;
+}
+
+.register-page .rp-left-panel h1 {
+    font-size: 3.5rem;
+    color: #2b2c40;
+    line-height: 1.2;
+    margin-bottom: 80px;
+}
+
+.register-page .rp-brand-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.register-page .rp-theme {
+    color: #5db7f7;
+}
+
+.register-page .rp-selection {
+    color: #2b2c40;
+}
+
+/* --- Panel Derecho (Tarjeta) --- */
+.register-page .rp-right-panel {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.register-page .rp-card {
+    background: #ffffff;
+    width: 85%;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 2px 17px 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Logo de la tarjeta */
+.register-page .rp-card-logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.register-page .rp-logo-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #696cff;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.register-page .rp-logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #566a7f;
+}
+
+/* Textos */
+.register-page .rp-card h2 {
+    font-size: 1.5rem;
+    color: #566a7f;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.register-page .rp-subtitle {
+    font-size: 0.95rem;
+    color: #697a8d;
+    margin-bottom: 25px;
+}
+
+/* Formulario y Controles */
+.register-page .rp-input-group {
+    margin-bottom: 20px;
+}
+
+.register-page .rp-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #566a7f;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.register-page .rp-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d9dee3;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease-in-out;
+    font-family: 'Public Sans', sans-serif;
+}
+
+.register-page .rp-input:focus {
+    border-color: #ff8400;
+}
+
+.register-page .rp-password-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.register-page .rp-input-icon-wrapper {
+    position: relative;
+}
+
+.register-page .rp-eye-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #a1acb8;
+}
+
+/* Checkbox */
+.register-page .rp-checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.register-page .rp-checkbox-group input {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.register-page .rp-checkbox-label {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #566a7f;
+    cursor: pointer;
+}
+
+/* Botón Principal */
+.register-page .rp-btn-primary {
+    width: 100%;
+    padding: 10px;
+    background-color: #ff8400;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+    font-family: 'Public Sans', sans-serif;
+}
+
+.register-page .rp-btn-primary:hover {
+    background-color: #E34C00;
+}
+
+
+/* Separador OR */
+.register-page .rp-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #a1acb8;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+.register-page .rp-divider::before,
+.register-page .rp-divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #d9dee3;
+}
+
+.register-page .rp-divider span {
+    padding: 0 10px;
+}
+
+/* Botones Sociales */
+.register-page .rp-social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.register-page .rp-btn-social {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.register-page .rp-fb {
+    background-color: #e1e8fa;
+    color: #3b5998;
+}
+
+.register-page .rp-gp {
+    background-color: #fce4e4;
+    color: #db4437;
+}
+
+.register-page .rp-tw {
+    background-color: #e2f4fb;
+    color: #1da1f2;
+}
+
+
+/* Responsive */
+@media (max-width: 900px) {
+    .register-page .rp-container {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .register-page .rp-left-panel {
+        display: none;
+    }
+
+    .register-page .rp-right-panel {
+        justify-content: center;
+    }
+}

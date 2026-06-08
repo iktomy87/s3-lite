@@ -1,0 +1,286 @@
+/* ── Login Page — Scoped under .login-page to avoid global leaks ── */
+
+.login-page {
+    background-color: #F5F5F9;
+    color: #566a7f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Public Sans', sans-serif;
+    overflow: auto;
+}
+
+/* Contenedor principal de dos columnas */
+.login-page .lp-container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* --- Panel Izquierdo --- */
+.login-page .lp-left-panel {
+    flex: 1;
+    padding-right: 50px;
+}
+
+.login-page .lp-left-panel h1 {
+    font-size: 3.5rem;
+    color: #2b2c40;
+    line-height: 1.2;
+    margin-bottom: 80px;
+}
+
+.login-page .lp-brand-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.login-page .lp-theme {
+    color: #5db7f7;
+}
+
+.login-page .lp-selection {
+    color: #2b2c40;
+}
+
+/* --- Panel Derecho (Tarjeta) --- */
+.login-page .lp-right-panel {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.login-page .lp-card {
+    background: #ffffff;
+    width: 85%;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 2px 17px 10px 20px rgba(0, 0, 0, 0.05)
+}
+
+/* Logo de la tarjeta */
+.login-page .lp-card-logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.login-page .lp-logo-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #696cff;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.login-page .lp-logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #566a7f;
+}
+
+/* Textos de bienvenida */
+.login-page .lp-card h2 {
+    font-size: 1.5rem;
+    color: #566a7f;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.login-page .lp-subtitle {
+    font-size: 0.95rem;
+    color: #697a8d;
+    margin-bottom: 25px;
+}
+
+/* Formulario y Controles */
+.login-page .lp-input-group {
+    margin-bottom: 20px;
+}
+
+.login-page .lp-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #566a7f;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.login-page .lp-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d9dee3;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease-in-out;
+    font-family: 'Public Sans', sans-serif;
+}
+
+.login-page .lp-input:focus {
+    border-color: #ff8400;
+}
+
+.login-page .lp-password-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.login-page .lp-forgot-link {
+    font-size: 0.85rem;
+    color: #ff8400;
+    text-decoration: none;
+}
+
+.login-page .lp-forgot-link:hover {
+    text-decoration: underline;
+}
+
+.login-page .lp-input-icon-wrapper {
+    position: relative;
+}
+
+.login-page .lp-eye-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #a1acb8;
+}
+
+/* Checkbox */
+.login-page .lp-checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.login-page .lp-checkbox-group input {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.login-page .lp-checkbox-label {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #566a7f;
+    cursor: pointer;
+}
+
+/* Botón Principal */
+.login-page .lp-btn-primary {
+    width: 100%;
+    padding: 10px;
+    background-color: #ff8400;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+    font-family: 'Public Sans', sans-serif;
+}
+
+.login-page .lp-btn-primary:hover {
+    background-color: #E34C00;
+}
+
+/* Texto de registro */
+.login-page .lp-register-text {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #697a8d;
+    margin-bottom: 20px;
+}
+
+.login-page .lp-register-text a {
+    font-size: 0.85rem;
+    color: #ff8400;
+    text-decoration: none;
+}
+
+.login-page .lp-register-text a:hover {
+    text-decoration: underline;
+}
+
+/* Separador OR */
+.login-page .lp-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #a1acb8;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+.login-page .lp-divider::before,
+.login-page .lp-divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #d9dee3;
+}
+
+.login-page .lp-divider span {
+    padding: 0 10px;
+}
+
+/* Botones Sociales */
+.login-page .lp-social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.login-page .lp-btn-social {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.login-page .lp-fb {
+    background-color: #e1e8fa;
+    color: #3b5998;
+}
+
+.login-page .lp-gp {
+    background-color: #fce4e4;
+    color: #db4437;
+}
+
+.login-page .lp-tw {
+    background-color: #e2f4fb;
+    color: #1da1f2;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .login-page .lp-container {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .login-page .lp-left-panel {
+        display: none;
+    }
+
+    .login-page .lp-right-panel {
+        justify-content: center;
+    }
+}

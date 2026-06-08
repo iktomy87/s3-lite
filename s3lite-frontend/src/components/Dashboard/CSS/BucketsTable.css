@@ -1,0 +1,215 @@
+/* File Table */
+.file-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.file-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.file-scroll::-webkit-scrollbar-thumb {
+    background: var(--border2);
+    border-radius: 2px;
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 8px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.file-table th.sortable {
+    cursor: pointer;
+}
+
+.file-table th.sortable:hover {
+    color: #E34C00;
+}
+
+.th-arrow {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 3px;
+    vertical-align: middle;
+    opacity: .5;
+}
+
+.file-table td {
+    padding: 9px 20px;
+    border-bottom: 1px solid #f3f4f8;
+    vertical-align: middle;
+}
+
+.file-table tr {
+    transition: background .08s;
+    cursor: pointer;
+}
+
+.file-table tr:hover td {
+    background: #f8f9fd;
+}
+
+.file-table tr.selected td {
+    background: var(--accent-dim);
+}
+
+.file-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cell-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.cell-name .fname {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-table tr.selected .fname {
+    font-weight: 600;
+}
+
+.badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+}
+
+.badge-blue {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge-red {
+    background: #fef2f2;
+    color: var(--danger);
+}
+
+.badge-green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.cell-sharing {
+    font-size: 12.5px;
+    color: var(--text2);
+    white-space: nowrap;
+}
+
+.cell-size {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+
+.cell-date {
+    font-size: 12.5px;
+    color: var(--text2);
+    white-space: nowrap;
+}
+
+.cell-actions {
+    text-align: right;
+}
+
+.row-actions {
+    display: flex;
+    gap: 2px;
+    justify-content: flex-end;
+    opacity: 0;
+    transition: opacity .1s;
+}
+
+tr:hover .row-actions,
+tr.selected .row-actions {
+    opacity: 1;
+}
+
+.act-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background .1s;
+}
+
+.act-btn:hover {
+    background: var(--surface3);
+}
+
+.act-btn.danger:hover {
+    background: #fef2f2;
+}
+
+/* File icon colors */
+.fi-folder {
+    color: #4169e1;
+}
+
+.fi-image {
+    color: #f59e0b;
+}
+
+.fi-code {
+    color: #10b981;
+}
+
+.fi-text {
+    color: #6b7280;
+}
+
+.fi-pdf {
+    color: #ef4444;
+}
+
+.fi-doc {
+    color: #3b82f6;
+}
+
+.fi-archive {
+    color: #f97316;
+}
+
+.fi-file {
+    color: #9ca3af;
+}
+
+/* Loading */
+.loading-row td {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-size: 13px;
+}
