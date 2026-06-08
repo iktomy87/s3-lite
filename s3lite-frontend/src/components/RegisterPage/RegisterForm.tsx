@@ -66,6 +66,8 @@ export const RegisterForm: React.FC = () => {
             <h2>Create an Account!</h2>
             <p className="rp-subtitle">Fill in the details to create your new account</p>
 
+            {error && <div className="rp-error" style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+
             <form onSubmit={handleRegister}>
               <div className="rp-input-group">
                 <label className="rp-label" htmlFor="reg-username">USERNAME</label>

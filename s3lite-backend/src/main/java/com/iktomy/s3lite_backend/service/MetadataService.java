@@ -25,8 +25,6 @@ public class MetadataService {
         this.bucketRepo = bucketRepo;
     }
 
-    // Lectura de metadatos (RF-03 / RF-06)
-
     public ObjectMetadata getMetadata(String bucketName, String objectKey, Long versionId) {
         ObjectVersion entity = (versionId == null)
                 ? findLatestOrThrow(bucketName, objectKey)
@@ -34,8 +32,6 @@ public class MetadataService {
 
         return toApiModel(entity);
     }
-
-    // Registro de nueva versión (RF-02 / RF-06)
 
     @Transactional
     public ObjectMetadata registerNewVersion(String bucketName,
@@ -65,8 +61,6 @@ public class MetadataService {
 
         return toApiModel(entity);
     }
-
-    // Soft-delete (RF-04)
 
     @Transactional
     public void softDeleteSpecificVersion(String bucketName, String objectKey, Long versionId) {

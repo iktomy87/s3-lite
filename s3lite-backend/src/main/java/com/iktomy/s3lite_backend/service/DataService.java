@@ -81,16 +81,12 @@ public class DataService {
     }
 
     private Path resolveFilePath(String bucketName, String objectKey, Long versionId) {
-        // Estructura: <storageRoot>/<bucketName>/<objectKey>/<versionId>
-        // objectKey puede contener '/' (sub-paths), Paths.get lo resuelve
-        // correctamente.
         Path resolved = storageRoot
                 .resolve(sanitize(bucketName))
                 .resolve(objectKey)
                 .resolve(versionId.toString())
                 .normalize();
 
-        // Evitar path traversal
         if (!resolved.startsWith(storageRoot)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Invalid object path: '" + objectKey + "'.");
@@ -99,7 +95,6 @@ public class DataService {
     }
 
     private String sanitize(String segment) {
-        // Solo permite caracteres seguros en nombres de bucket/key para el FS
         if (segment == null || segment.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty path segment.");
         }
