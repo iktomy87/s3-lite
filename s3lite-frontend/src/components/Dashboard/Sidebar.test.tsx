@@ -25,7 +25,7 @@ describe('Sidebar Component', () => {
   });
 
   it('changes active tab when clicked', () => {
-    const { container } = render(<Sidebar />);
+    render(<Sidebar />);
     
     const recentTab = screen.getByRole('button', { name: /recent/i });
     fireEvent.click(recentTab);
