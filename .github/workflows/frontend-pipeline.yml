@@ -12,6 +12,7 @@ on:
       - main
     paths:
       - "s3lite-frontend/**"
+  workflow_dispatch:
 
 defaults:
   run:
