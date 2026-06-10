@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-logo">
         <div>
           <div className="logo-name">
-            <img src="https://i.imgur.com/06lxh6r.png" style={{ width: '100px' }} />
+            <img src="https://i.imgur.com/06lxh6r.png" alt="S3 Lite Logo" style={{ width: '100px' }} />
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           value={bucketQuery}
           onChange={(e) => setBucketQuery(e.target.value)}
         />
-        <button type="submit">
+        <button type="submit" aria-label="Explore bucket">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
             <polyline points="9 18 15 12 9 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

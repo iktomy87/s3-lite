@@ -42,14 +42,14 @@ export const LoginForm: React.FC = () => {
       <div className="lp-container">
         <div className="lp-left-panel">
           <div className="lp-brand-logo">
-            <img src="https://i.imgur.com/BIJDQId.png" style={{ width: '100%', paddingRight: '100px' }} />
+            <img src="https://i.imgur.com/BIJDQId.png" alt="Hero Illustration" style={{ width: '100%', paddingRight: '100px' }} />
           </div>
         </div>
 
         <div className="lp-right-panel">
           <div className="lp-card">
             <div className="lp-card-logo">
-              <img src="https://i.imgur.com/06lxh6r.png" style={{ width: '100px' }} />
+              <img src="https://i.imgur.com/06lxh6r.png" alt="S3 Lite Logo" style={{ width: '100px' }} />
             </div>
 
             <h2>Welcome to S3-Lite</h2>
@@ -74,7 +74,7 @@ export const LoginForm: React.FC = () => {
               <div className="lp-input-group">
                 <div className="lp-password-labels">
                   <label className="lp-label" htmlFor="password">PASSWORD</label>
-                  <a href="#" className="lp-forgot-link">Forgot Password?</a>
+                  <a href="/forgot" className="lp-forgot-link">Forgot Password?</a>
                 </div>
                 <div className="lp-input-icon-wrapper">
                   <input
@@ -88,6 +88,7 @@ export const LoginForm: React.FC = () => {
                   />
                   <span
                     className="lp-eye-icon"
+                    data-testid="toggle-password"
                     onClick={() => setShowPassword(!showPassword)}
                     style={{ cursor: 'pointer' }}
                   >

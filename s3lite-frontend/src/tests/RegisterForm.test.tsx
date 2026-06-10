@@ -64,9 +64,9 @@ describe('RegisterForm Component', () => {
             passwordConfirm: 'password123' 
         },
       });
-      expect(setAuthToken).toHaveBeenCalledWith('fake-token');
-      expect(mockNavigate).toHaveBeenCalledWith('/home');
     });
+    expect(setAuthToken).toHaveBeenCalledWith('fake-token');
+    expect(mockNavigate).toHaveBeenCalledWith('/home');
   });
 
   test('handles registration failure', async () => {

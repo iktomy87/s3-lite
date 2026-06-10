@@ -28,8 +28,8 @@ describe('BucketsTable Component', () => {
 
   test('calls onBucketClick when a bucket row is clicked', () => {
     render(<BucketsTable buckets={mockBuckets} onBucketClick={mockOnBucketClick} />);
-    const bucketRow = screen.getByText('bucket-1').closest('tr');
-    fireEvent.click(bucketRow!);
+    const bucketRow = screen.getByRole('row', { name: /bucket-1/i });
+    fireEvent.click(bucketRow);
     expect(mockOnBucketClick).toHaveBeenCalledWith('bucket-1');
   });
 });

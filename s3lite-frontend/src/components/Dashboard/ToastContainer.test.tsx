@@ -29,8 +29,8 @@ describe('ToastContainer Component', () => {
   });
 
   it('renders nothing inside container when toasts array is empty', () => {
-    const { container } = render(<ToastContainer toasts={[]} />);
-    const toastContainer = container.querySelector('.toast-container');
+    render(<ToastContainer toasts={[]} />);
+    const toastContainer = screen.getByTestId('toast-container');
     expect(toastContainer).toBeEmptyDOMElement();
   });
 });

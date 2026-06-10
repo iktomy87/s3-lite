@@ -52,6 +52,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         <input 
           type="file" 
           id="fileInput" 
+          data-testid="file-input"
           className="hidden" 
           ref={fileInputRef}
           onChange={handleFileChange} 
@@ -59,7 +60,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         
         {progress !== undefined && (
           <div id="progressWrap" className="mb-3">
-            <div className="progress-bar"><div className="progress-fill" style={{ width: `${progress}%` }}></div></div>
+            <div className="progress-bar"><div className="progress-fill" data-testid="progress-fill" style={{ width: `${progress}%` }}></div></div>
           </div>
         )}
         

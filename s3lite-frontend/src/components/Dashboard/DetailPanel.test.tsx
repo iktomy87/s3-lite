@@ -36,12 +36,12 @@ describe('DetailPanel Component', () => {
   });
 
   it('calls onClose when close button is clicked', () => {
-    const { container } = render(
+    render(
       <DetailPanel activeTab="activity" onTabChange={mockOnTabChange} onClose={mockOnClose} />
     );
     
-    const closeBtn = container.querySelector('.dp-close');
-    fireEvent.click(closeBtn!);
+    const closeBtn = screen.getByRole('button', { name: /close panel/i });
+    fireEvent.click(closeBtn);
     expect(mockOnClose).toHaveBeenCalled();
   });
 });

@@ -27,11 +27,11 @@ describe('Sidebar Component', () => {
   it('changes active tab when clicked', () => {
     const { container } = render(<Sidebar />);
     
-    const recentTab = screen.getByText('Recent').closest('button');
-    fireEvent.click(recentTab!);
+    const recentTab = screen.getByRole('button', { name: /recent/i });
+    fireEvent.click(recentTab);
     expect(recentTab).toHaveClass('active');
     
-    const allFilesTab = screen.getByText('All Files').closest('button');
+    const allFilesTab = screen.getByRole('button', { name: /all files/i });
     expect(allFilesTab).not.toHaveClass('active');
   });
 
@@ -41,7 +41,7 @@ describe('Sidebar Component', () => {
     const input = screen.getByPlaceholderText('Bucket name…');
     fireEvent.change(input, { target: { value: 'my-new-bucket' } });
     
-    const submitBtn = input.nextElementSibling as HTMLButtonElement;
+    const submitBtn = screen.getByRole('button', { name: /explore bucket/i });
     fireEvent.click(submitBtn);
     
     expect(mockOnExploreBucket).toHaveBeenCalledWith('my-new-bucket');

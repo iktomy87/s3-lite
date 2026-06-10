@@ -16,10 +16,10 @@ describe('BucketModal Component', () => {
   });
 
   it('does not render initially when isOpen is false', () => {
-    const { container } = render(
+    render(
       <BucketModal isOpen={false} onClose={mockOnClose} onCreate={mockOnCreate} />
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText('Create new bucket')).toBeNull();
   });
 
   it('renders correctly when isOpen is true', () => {
