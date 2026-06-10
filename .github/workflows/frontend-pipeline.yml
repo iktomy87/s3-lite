@@ -1,0 +1,254 @@
+name: Frontend CI/CD 
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "s3lite-frontend/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "s3lite-frontend/**"
+
+defaults:
+  run:
+    working-directory: s3lite-frontend
+
+env:
+  NODE_VERSION: "20"
+  
+jobs:
+  lint:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: s3lite-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint "src/**/*.{ts,tsx}" --max-warnings=0
+
+      - name: 🔴 Notify Discord — Lint Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ ESLint Check Failed"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            ESLint found problems. The pipeline was stopped.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/github/white"
+
+  test:
+    name: Automated Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: s3lite-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage --watchAll=false --forceExit
+        env:
+          CI: true
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: s3lite-frontend/coverage/
+          retention-days: 7
+
+      - name: 🔴 Notify Discord — Tests Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Tests Failed"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            Automated tests failed. Review the coverage report.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/github/white"
+
+  deploy:
+    name: 🌐 Deploy to Vercel (Production)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: s3lite-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+─
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project (Vercel)
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+
+      - name: Deploy to Vercel Production
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $URL"
+
+      - name: 🟢 Notify Discord — Deploy Successful
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: success
+          title: "✅ Sucessful Deploy"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Autor:** `${{ github.actor }}`
+            **URL de producción:** ${{ steps.deploy.outputs.url }}
+
+            ✅ ESLint OK | ✅ Tests OK | 🚀 Deployed
+          color: 0x00cc66
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/vercel/white"
+
+      # ── Notificar fallo de deploy a Discord ──
+      - name: 🔴 Notify Discord — Deploy Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Deploy Fallido — Producción"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            The build or deploy failed. Review the logs from the workflow.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/vercel/white"
+
+  preview:
+    name: 👁️ Deploy Preview (PR)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: s3lite-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project (preview)
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+
+      - name: Deploy Preview to Vercel
+        id: preview
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Preview URL: $URL"
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 👁️ Preview deployed\n\n🔗 **URL:** ${{ steps.preview.outputs.url }}\n\n✅ ESLint OK | ✅ Tests OK`
+            })
+
+      - name: 🔵 Notify Discord — Preview Ready
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: success
+          title: "👁️ Preview Ready — PR #${{ github.event.number }}"
+          description: |
+            **PR:** [${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})
+            **Branch:** `${{ github.head_ref }}` → `${{ github.base_ref }}`
+            **Autor:** `${{ github.actor }}`
+            **Preview URL:** ${{ steps.preview.outputs.url }}
+          color: 0x5865f2
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/vercel/white"
