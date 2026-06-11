@@ -1,0 +1,175 @@
+name: Backend CI/CD
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "s3lite-backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "s3lite-backend/**"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: s3lite-backend
+
+env:
+  JAVA_VERSION: "21"
+
+jobs:
+  build:
+    name: Maven Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Compile project
+        run: ./mvnw clean compile -B
+
+      - name: 🔴 Notify Discord — Build Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Maven Build Failed"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            Maven failed to compile. The pipeline was stopped.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/springboot/white"
+
+  test:
+    name: Tests & SonarCloud
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Run tests & SonarCloud analysis
+        run: ./mvnw verify sonar:sonar -B
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: s3lite_test
+          POSTGRES_USER: sa
+          POSTGRES_PASSWORD: sa
+          JWT_SECRET: ci-test-secret-must-be-at-least-256-bits-long-for-hmac
+          CORS_ALLOWED_ORIGINS: http://localhost:3000
+
+      - name: Upload Surefire report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-report
+          path: s3lite-backend/target/surefire-reports/
+          retention-days: 7
+
+      - name: 🔴 Notify Discord — Tests Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Tests Failed"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            Unit tests or SonarCloud analysis failed. Review the Surefire report.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/springboot/white"
+
+  deploy:
+    name: Deploy to Railway (Production)
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://s3-lite-production.up.railway.app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: 🟢 Notify Discord — Deploy Successful
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: success
+          title: "✅ Successful Deploy — Backend"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Autor:** `${{ github.actor }}`
+            **URL de producción:** https://s3-lite-production.up.railway.app
+
+            ✅ Build OK | ✅ Tests OK | 🚀 Deployed
+          color: 0x00cc66
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/railway/white"
+
+      - name: 🔴 Notify Discord — Deploy Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Deploy Fallido — Production"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            The build or deploy failed. Review the logs from the workflow.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/railway/white"
