@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './CSS/DetailPanel.css';
 
 type DetailPanelOptions = 'activity' | 'comments' | 'versions';
@@ -23,7 +23,7 @@ export const DetailPanel: React.FC<DetailPanelProps> = ({
           <div className="dp-file-icon" id="dpIcon">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="#4169e1" strokeWidth="1.6" /><polyline points="13 2 13 9 20 9" stroke="#4169e1" strokeWidth="1.6" /></svg>
           </div>
-          <button className="dp-close" onClick={onClose}>
+          <button className="dp-close" onClick={onClose} aria-label="Close panel">
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="#9ba0b0" strokeWidth="1.8" /><line x1="6" y1="6" x2="18" y2="18" stroke="#9ba0b0" strokeWidth="1.8" /></svg>
           </button>
         </div>

@@ -43,15 +43,15 @@ describe('Topbar Component', () => {
       />
     );
     
-    const activityTab = screen.getByText('Activity');
+    const activityTab = screen.getByRole('button', { name: /activity/i });
     fireEvent.click(activityTab);
     expect(mockOnActivities).toHaveBeenCalled();
-    expect(activityTab.closest('button')).toHaveClass('active');
+    expect(activityTab).toHaveClass('active');
     
-    const filesTab = screen.getByText('Files');
+    const filesTab = screen.getByRole('button', { name: /files/i });
     fireEvent.click(filesTab);
     expect(mockOnFiles).toHaveBeenCalled();
-    expect(filesTab.closest('button')).toHaveClass('active');
+    expect(filesTab).toHaveClass('active');
   });
 
   it('calls onSearch when enter is pressed', () => {

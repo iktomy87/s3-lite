@@ -26,10 +26,7 @@ export const Topbar: React.FC<TopBarProps> = ({
   const [activeTab, setActiveTab] = useState<BarOptions>('files');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(searchQuery);
-  };
+
 
   return (
     <header className="topbar">

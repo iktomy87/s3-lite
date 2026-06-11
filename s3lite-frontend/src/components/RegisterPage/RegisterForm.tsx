@@ -53,14 +53,14 @@ export const RegisterForm: React.FC = () => {
       <div className="rp-container">
         <div className="rp-left-panel">
           <div className="rp-brand-logo">
-            <img src="https://i.imgur.com/BIJDQId.png" style={{ width: '100%', paddingRight: '100px' }} />
+            <img src="https://i.imgur.com/BIJDQId.png" alt="Hero Illustration" style={{ width: '100%', paddingRight: '100px' }} />
           </div>
         </div>
 
         <div className="rp-right-panel">
           <div className="rp-card">
             <div className="rp-card-logo">
-              <img src="https://i.imgur.com/06lxh6r.png" style={{ width: '100px' }} />
+              <img src="https://i.imgur.com/06lxh6r.png" alt="S3 Lite Logo" style={{ width: '100px' }} />
             </div>
 
             <h2>Create an Account!</h2>

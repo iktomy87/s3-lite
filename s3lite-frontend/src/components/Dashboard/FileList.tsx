@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './CSS/FileList.css';
 
 interface FileHeaderProps {
@@ -12,13 +12,9 @@ export const FileList: React.FC<FileHeaderProps> = ({
     onFilter,
     onRefresh,
 }) => {
-    // TODO: ver si al final usamos esto o no
-    const [filterQuery, setFilterQuery] = useState('');
-    const [allVersions, setAllVersions] = useState(false);
-
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-        setFilterQuery(val);
+        onFilter(val);
         onFilter(val);
     };
 
@@ -35,7 +31,7 @@ export const FileList: React.FC<FileHeaderProps> = ({
                 <div className="filter-input-wrap">
                     <input className="filter-input" type="text" placeholder="Filter…" id="localFilter" onChange={handleFilterChange} />
                 </div>
-                <button className="icon-btn" onClick={onRefresh}>
+                <button className="icon-btn" onClick={onRefresh} aria-label="Refresh">
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10" stroke="#5c6072" strokeWidth="1.8" /><polyline points="1 20 1 14 7 14" stroke="#5c6072" strokeWidth="1.8" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="#5c6072" strokeWidth="1.8" /></svg>
                 </button>
             </div>

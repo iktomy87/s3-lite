@@ -51,9 +51,9 @@ describe('LoginForm Component', () => {
         method: 'POST',
         data: { username: 'testuser', password: 'password123' },
       });
-      expect(setAuthToken).toHaveBeenCalledWith('fake-token');
-      expect(mockNavigate).toHaveBeenCalledWith('/home');
     });
+    expect(setAuthToken).toHaveBeenCalledWith('fake-token');
+    expect(mockNavigate).toHaveBeenCalledWith('/home');
   });
 
   test('handles login failure', async () => {
@@ -75,7 +75,7 @@ describe('LoginForm Component', () => {
   });
 
   test('toggles password visibility', () => {
-    const { container } = render(
+    render(
       <MemoryRouter>
         <LoginForm />
       </MemoryRouter>
@@ -83,10 +83,8 @@ describe('LoginForm Component', () => {
     const passwordInput = screen.getByLabelText(/PASSWORD/i, { selector: 'input' });
     expect(passwordInput).toHaveAttribute('type', 'password');
 
-    const eyeIcon = container.querySelector('.lp-eye-icon');
-    if (eyeIcon) {
-      fireEvent.click(eyeIcon);
-      expect(passwordInput).toHaveAttribute('type', 'text');
-    }
+    const eyeIcon = screen.getByTestId('toggle-password');
+    fireEvent.click(eyeIcon);
+    expect(passwordInput).toHaveAttribute('type', 'text');
   });
 });

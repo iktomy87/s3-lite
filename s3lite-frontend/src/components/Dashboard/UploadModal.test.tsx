@@ -11,10 +11,10 @@ describe('UploadModal Component', () => {
   });
 
   it('does not render when isOpen is false', () => {
-    const { container } = render(
+    render(
       <UploadModal isOpen={false} onClose={mockOnClose} onUpload={mockOnUpload} />
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText('Upload object')).toBeNull();
   });
 
   it('renders correctly when isOpen is true', () => {
@@ -41,13 +41,13 @@ describe('UploadModal Component', () => {
   });
 
   it('calls onUpload when file and key are provided', () => {
-    const { container } = render(
+    render(
       <UploadModal isOpen={true} onClose={mockOnClose} onUpload={mockOnUpload} />
     );
     
     // Simulate file selection
     const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    const fileInput = container.querySelector('#fileInput') as HTMLInputElement;
+    const fileInput = screen.getByTestId('file-input');
     fireEvent.change(fileInput, { target: { files: [file] } });
     
     expect(screen.getByText('hello.png')).toBeInTheDocument();
@@ -64,11 +64,11 @@ describe('UploadModal Component', () => {
   });
 
   it('renders progress bar if progress is provided', () => {
-    const { container } = render(
+    render(
       <UploadModal isOpen={true} onClose={mockOnClose} onUpload={mockOnUpload} progress={50} />
     );
     
-    const progressBar = container.querySelector('.progress-fill');
+    const progressBar = screen.getByTestId('progress-fill');
     expect(progressBar).toHaveStyle('width: 50%');
   });
 

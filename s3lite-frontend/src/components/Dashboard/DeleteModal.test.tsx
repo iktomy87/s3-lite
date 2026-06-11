@@ -11,10 +11,10 @@ describe('DeleteModal Component', () => {
   });
 
   it('does not render when isOpen is false', () => {
-    const { container } = render(
+    render(
       <DeleteModal isOpen={false} onClose={mockOnClose} onConfirm={mockOnConfirm} />
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText('Delete object')).toBeNull();
   });
 
   it('renders correctly when isOpen is true', () => {

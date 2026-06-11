@@ -40,14 +40,12 @@ describe('FileList Component', () => {
   });
 
   it('calls onRefresh when refresh button is clicked', () => {
-    const { container } = render(
+    render(
       <FileList onAllVersions={mockOnAllVersions} onFilter={mockOnFilter} onRefresh={mockOnRefresh} />
     );
     
-    const refreshButton = container.querySelector('.icon-btn');
-    if (refreshButton) {
-        fireEvent.click(refreshButton);
-        expect(mockOnRefresh).toHaveBeenCalled();
-    }
+    const refreshButton = screen.getByRole('button', { name: /refresh/i });
+    fireEvent.click(refreshButton);
+    expect(mockOnRefresh).toHaveBeenCalled();
   });
 });
