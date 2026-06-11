@@ -27,3 +27,12 @@ s3lite:
   jwt:
     secret: ${JWT_SECRET:s3lite-default-dev-secret-change-in-production-must-be-256bits}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}   # 24 h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
