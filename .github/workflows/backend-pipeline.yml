@@ -37,6 +37,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: temurin
           cache: maven
+      
+      - name: Give permissions
+        run: chmod +x mvnw
 
       - name: Compile project
         run: ./mvnw clean compile -B
