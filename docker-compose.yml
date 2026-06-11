@@ -1,0 +1,80 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: s3lite-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-s3lite}
+      POSTGRES_USER: ${POSTGRES_USER:-s3lite}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-s3lite} -d ${POSTGRES_DB:-s3lite}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - s3lite-net
+
+  backend:
+    build:
+      context: ./s3lite-backend
+      dockerfile: Dockerfile
+    container_name: s3lite-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-s3lite}
+      POSTGRES_USER: ${POSTGRES_USER:-s3lite}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      STORAGE_ROOT: /app/s3-data
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    volumes:
+      - s3_storage:/app/s3-data
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - s3lite-net
+
+  frontend:
+    build:
+      context: ./s3lite-frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8080/api}
+    container_name: s3lite-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - s3lite-net
+
+volumes:
+  postgres_data:
+    driver: local
+  s3_storage:
+    driver: local
+
+networks:
+  s3lite-net:
+    driver: bridge
