@@ -5,7 +5,7 @@ on:
       - main
     paths:
       - "s3lite-backend/**"
-      - ".github/workflows/deploy-backend.yml"
+      - ".github/workflows/backend-pipeline.yml"
   pull_request:
     branches:
       - main
@@ -63,15 +63,13 @@ jobs:
           avatar_url: "https://cdn.simpleicons.org/springboot/white"
 
   test:
-    name: Tests & SonarCloud
+    name: Automated Tests
     runs-on: ubuntu-latest
     needs: build
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -80,18 +78,19 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Run tests & SonarCloud analysis
-        run: ./mvnw verify sonar:sonar -B
+      - name: Give permissions
+        run: chmod +x mvnw
+
+      - name: Run unit tests
+        run: ./mvnw verify -B
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           PGHOST: localhost
           PGPORT: 5432
           PGDATABASE: s3lite_test
           POSTGRES_USER: sa
           POSTGRES_PASSWORD: sa
           JWT_SECRET: ci-test-secret-must-be-at-least-256-bits-long-for-hmac
-          CORS_ALLOWED_ORIGINS: http://localhost:3000
+          SPRING_WEB_CORS_ALLOWED_ORIGINS: http://localhost:3000
 
       - name: Upload Surefire report
         if: always()
@@ -114,15 +113,67 @@ jobs:
             **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
             **Triggered by:** `${{ github.actor }}`
 
-            Unit tests or SonarCloud analysis failed. Review the Surefire report.
+            Unit tests failed. Review the Surefire report.
           color: 0xff4444
           username: "S3-Lite CI/CD"
           avatar_url: "https://cdn.simpleicons.org/springboot/white"
 
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Give permissions
+        run: chmod +x mvnw
+
+      - name: SonarCloud analysis
+        run: ./mvnw sonar:sonar -B
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: s3lite_test
+          POSTGRES_USER: sa
+          POSTGRES_PASSWORD: sa
+          JWT_SECRET: ci-test-secret-must-be-at-least-256-bits-long-for-hmac
+          CORS_ALLOWED_ORIGINS: http://localhost:3000
+
+      - name: 🔴 Notify Discord — SonarCloud Failed
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ SonarCloud Analysis Failed"
+          description: |
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** `${{ github.actor }}`
+
+            SonarCloud analysis failed or quality gate not passed.
+          color: 0xff4444
+          username: "S3-Lite CI/CD"
+          avatar_url: "https://cdn.simpleicons.org/sonarcloud/white"
+
   deploy:
     name: Deploy to Railway (Production)
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: [build, test, sonarcloud]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: production
@@ -154,7 +205,7 @@ jobs:
             **Autor:** `${{ github.actor }}`
             **URL de producción:** https://s3-lite-production.up.railway.app
 
-            ✅ Build OK | ✅ Tests OK | 🚀 Deployed
+            ✅ Build OK | ✅ Tests OK | ✅ Sonar OK | 🚀 Deployed
           color: 0x00cc66
           username: "S3-Lite CI/CD"
           avatar_url: "https://cdn.simpleicons.org/railway/white"
