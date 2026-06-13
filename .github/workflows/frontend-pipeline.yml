@@ -44,7 +44,7 @@ jobs:
 
       - name: 🔴 Notify Discord — Lint Failed
         if: failure()
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: failure
@@ -94,7 +94,7 @@ jobs:
 
       - name: 🔴 Notify Discord — Tests Failed
         if: failure()
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: failure
@@ -153,7 +153,7 @@ jobs:
 
       - name: 🟢 Notify Discord — Deploy Successful
         if: success()
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: success
@@ -173,7 +173,7 @@ jobs:
       # ── Notificar fallo de deploy a Discord ──
       - name: 🔴 Notify Discord — Deploy Failed
         if: failure()
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: failure
@@ -240,7 +240,7 @@ jobs:
 
       - name: 🔵 Notify Discord — Preview Ready
         if: success()
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: success
