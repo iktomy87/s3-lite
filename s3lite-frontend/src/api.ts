@@ -13,30 +13,48 @@ interface FetchOptions extends RequestInit {
 }
 
 export const apiClient = async (endpoint: string, options: FetchOptions = {}) => {
-  const { data, headers: customHeaders, body: customBody, ...customConfig } = options;
+  // Destructure everything — including 'headers' — out of options so that
+  // spreading ...rest at the end never overwrites our merged headers object.
+  const { data, headers: customHeaders, body: customBody, method: customMethod, ...rest } = options;
   const token = getAuthToken();
 
   const isFormDataOrFile = data instanceof FormData || data instanceof File || data instanceof Blob;
 
-  const headers: any = {
+  const mergedHeaders: Record<string, string> = {
     ...(isFormDataOrFile ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(customHeaders as any),
+    ...(customHeaders as Record<string, string> | undefined),
   };
 
+  const method = customMethod ?? (data || customBody ? 'POST' : 'GET');
+  const body = customBody
+    ? customBody
+    : data
+      ? isFormDataOrFile
+        ? data
+        : JSON.stringify(data)
+      : undefined;
+
   const config: RequestInit = {
-    method: data || customBody ? (options.method || 'POST') : (options.method || 'GET'),
-    body: customBody ? customBody : (data ? (isFormDataOrFile ? data : JSON.stringify(data)) : undefined),
-    headers,
-    ...customConfig,
+    ...rest,       // safe: no longer contains method, headers, or body
+    method,
+    headers: mergedHeaders,
+    body,
   };
+
+  console.debug(`[API] ${method} ${BASE_URL}${endpoint}`, { hasToken: !!token });
 
   const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
+  console.debug(`[API] ${method} ${endpoint} → ${response.status}`);
+
   if (response.status === 401) {
+    console.warn(`[API] 401 on ${endpoint} — clearing token and redirecting to login`);
+    /* 
     removeAuthToken();
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+    removeUsername();
+    window.location.href = '/login'; */
+    throw new Error('Session expired. Please log in again.');
   }
 
   if (response.status === 403) {
@@ -44,7 +62,7 @@ export const apiClient = async (endpoint: string, options: FetchOptions = {}) =>
   }
 
   if (!response.ok) {
-    let errorMsg = 'An error occurred';
+    let errorMsg = `Error ${response.status}`;
     try {
       const errorData = await response.json();
       errorMsg = errorData.message || errorMsg;

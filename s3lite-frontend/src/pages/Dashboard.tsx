@@ -9,7 +9,7 @@ import { BucketModal } from '../components/Dashboard/BucketModal';
 import { UploadModal } from '../components/Dashboard/UploadModal';
 import { DeleteModal } from '../components/Dashboard/DeleteModal';
 import { ToastContainer, ToastProps } from '../components/Dashboard/ToastContainer';
-import { getUsername, apiClient, removeAuthToken, removeUsername } from '../api';
+import { getUsername, getAuthToken, apiClient, BASE_URL, removeAuthToken, removeUsername } from '../api';
 import { useNavigate } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
@@ -54,16 +54,43 @@ export const Dashboard: React.FC = () => {
     };
 
     const handleUpload = async (file: File, key: string) => {
+        // Use the filename as fallback if the user left the key field empty
+        const objectKey = key.trim() || file.name;
+
+        if (!currentBucket) {
+            setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: 'No bucket selected. Please explore a bucket first.', type: 'error' }]);
+            return;
+        }
+
         try {
-            await apiClient(`/storage/${currentBucket}/${key}`, {
+            // Use raw fetch to guarantee Content-Type: application/octet-stream
+            // (apiClient's File detection can be overridden by the browser's file MIME type)
+            const token = getAuthToken();
+            const res = await fetch(`${BASE_URL}/storage/${currentBucket}/${objectKey}`, {
                 method: 'PUT',
-                data: file,
-                headers: { 'Content-Type': 'application/octet-stream' }
+                body: file,
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
             });
+
+            if (res.status === 401) {
+                /*
+               removeAuthToken();
+               removeUsername();
+               window.location.href = '/login'; */
+                console.log('401 recibido', await res.clone().json().catch(() => 'sin body'));
+                return;
+            }
+            if (!res.ok) {
+                let msg = `Error ${res.status}`;
+                try { const d = await res.json(); msg = d.message || msg; } catch (_) { }
+                throw new Error(msg);
+            }
             setIsUploadOpen(false);
             setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Success', message: 'File uploaded successfully!', type: 'success' }]);
-            // Trigger refresh logic if needed
-            fetchBuckets(); // If it affects buckets or just objects
+            fetchBuckets();
         } catch (err: any) {
             setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: err.message, type: 'error' }]);
         }
