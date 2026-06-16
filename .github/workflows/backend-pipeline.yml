@@ -186,19 +186,19 @@ jobs:
       - name: Install Railway CLI
         run: npm install --global @railway/cli
         
-      - name: Debug Railway Token
+      - name: Railway Debug
+        working-directory: ${{ github.workspace }}/s3lite-backend
         run: |
-          echo "Token length: ${#RAILWAY_TOKEN}"
-          echo "Token first 4 chars: ${RAILWAY_TOKEN:0:4}"
-          curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer $RAILWAY_TOKEN" \
-            https://backboard.railway.app/graphql/v2
+          railway --version
+          railway whoami
+          railway status
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
           
       - name: Deploy to Railway
-        working-directory: ${{ github.workspace }}
-        run: railway up --service "s3-lite" --environment production --detach ./s3lite-backend
+        working-directory: ${{ github.workspace }}/s3lite-backend
+        run: railway up --service "s3-lite" --environment production --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
