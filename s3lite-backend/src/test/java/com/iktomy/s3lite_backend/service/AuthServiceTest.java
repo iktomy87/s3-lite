@@ -2,7 +2,9 @@ package com.iktomy.s3lite_backend.service;
 
 import com.iktomy.s3lite_backend.model.BucketPermission.PermissionType;
 import com.iktomy.s3lite_backend.model.User;
+import com.iktomy.s3lite_backend.model.Bucket;
 import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
+import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,9 @@ class AuthServiceTest {
 
     @Mock
     private BucketPermissionRepository permissionRepository;
+
+    @Mock
+    private BucketRepository bucketRepository;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -79,6 +84,8 @@ class AuthServiceTest {
 
     @Test
     void requireReadAccess_noPermission_throws403() {
+        // isOwner() returns false → falls through to permission check
+        when(bucketRepository.findByName("my-bucket")).thenReturn(Optional.empty());
         when(permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 "alice", "my-bucket", PermissionType.READ)).thenReturn(false);
 
@@ -90,6 +97,7 @@ class AuthServiceTest {
 
     @Test
     void requireReadAccess_hasPermission_doesNotThrow() {
+        when(bucketRepository.findByName("my-bucket")).thenReturn(Optional.empty());
         when(permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 "alice", "my-bucket", PermissionType.READ)).thenReturn(true);
 
@@ -98,6 +106,8 @@ class AuthServiceTest {
 
     @Test
     void requireWriteAccess_noPermission_throws403() {
+        // isOwner() returns false → falls through to permission check
+        when(bucketRepository.findByName("my-bucket")).thenReturn(Optional.empty());
         when(permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 "alice", "my-bucket", PermissionType.WRITE)).thenReturn(false);
 
@@ -109,6 +119,7 @@ class AuthServiceTest {
 
     @Test
     void requireWriteAccess_hasPermission_doesNotThrow() {
+        when(bucketRepository.findByName("my-bucket")).thenReturn(Optional.empty());
         when(permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 "alice", "my-bucket", PermissionType.WRITE)).thenReturn(true);
 
