@@ -4,8 +4,11 @@ import com.iktomy.s3lite.model.BucketResponse;
 import com.iktomy.s3lite.model.ObjectListResponse;
 import com.iktomy.s3lite.model.ObjectSummary;
 import com.iktomy.s3lite_backend.model.Bucket;
+import com.iktomy.s3lite_backend.model.BucketPermission;
+import com.iktomy.s3lite_backend.model.BucketPermission.PermissionType;
 import com.iktomy.s3lite_backend.model.ObjectVersion;
 import com.iktomy.s3lite_backend.model.User;
+import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
 import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.ObjectVersionRepository;
 import org.springframework.http.HttpStatus;
@@ -21,11 +24,14 @@ public class BucketService {
 
     private final BucketRepository bucketRepository;
     private final ObjectVersionRepository versionRepository;
+    private final BucketPermissionRepository permissionRepository;
 
     public BucketService(BucketRepository bucketRepository,
-            ObjectVersionRepository versionRepository) {
+            ObjectVersionRepository versionRepository,
+            BucketPermissionRepository permissionRepository) {
         this.bucketRepository = bucketRepository;
         this.versionRepository = versionRepository;
+        this.permissionRepository = permissionRepository;
     }
 
     @Transactional
@@ -39,6 +45,15 @@ public class BucketService {
         bucket.setName(bucketName);
         bucket.setOwnerId(owner.getId());
         bucketRepository.save(bucket);
+
+        // Grant READ and WRITE permissions to the bucket owner
+        for (PermissionType type : List.of(PermissionType.READ, PermissionType.WRITE)) {
+            BucketPermission permission = new BucketPermission();
+            permission.setUser(owner);
+            permission.setBucket(bucket);
+            permission.setPermission(type);
+            permissionRepository.save(permission);
+        }
 
         return new BucketResponse(bucket.getId(), bucket.getName(), bucket.getOwnerId(), bucket.getCreatedAt());
     }

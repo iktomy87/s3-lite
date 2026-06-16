@@ -28,8 +28,13 @@ public class StorageController implements StorageApi {
     }
 
     @Override
-    public ResponseEntity<org.springframework.core.io.Resource> downloadObject(String bucketName, String objectKey,
-            Long versionId) {
+    @org.springframework.web.bind.annotation.GetMapping(value = "/api/storage/{bucketName}/{*objectKey}")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadObject(
+            @org.springframework.web.bind.annotation.PathVariable("bucketName") String bucketName, 
+            @org.springframework.web.bind.annotation.PathVariable("objectKey") String objectKey,
+            @org.springframework.web.bind.annotation.RequestParam(value = "versionId", required = false) Long versionId) {
+        
+        if (objectKey.startsWith("/")) objectKey = objectKey.substring(1);
         authService.requireReadAccess(getAuthenticatedUser().username(), bucketName);
         // Buscamos los metadatos para conocer el tipo
         ObjectMetadata metadata = metadataService.getMetadata(bucketName, objectKey, versionId);
@@ -44,8 +49,13 @@ public class StorageController implements StorageApi {
     }
 
     @Override
-    public ResponseEntity<ObjectMetadata> uploadObject(String bucketName, String objectKey,
-            org.springframework.core.io.Resource body) {
+    @org.springframework.web.bind.annotation.PutMapping(value = "/api/storage/{bucketName}/{*objectKey}", consumes = "application/octet-stream")
+    public ResponseEntity<ObjectMetadata> uploadObject(
+            @org.springframework.web.bind.annotation.PathVariable("bucketName") String bucketName, 
+            @org.springframework.web.bind.annotation.PathVariable("objectKey") String objectKey,
+            @org.springframework.web.bind.annotation.RequestBody org.springframework.core.io.Resource body) {
+        
+        if (objectKey.startsWith("/")) objectKey = objectKey.substring(1);
         authService.requireWriteAccess(getAuthenticatedUser().username(), bucketName);
         try {
             InputStream fileStream = body.getInputStream();
@@ -67,7 +77,13 @@ public class StorageController implements StorageApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteObject(String bucketName, String objectKey, Long versionId) {
+    @org.springframework.web.bind.annotation.DeleteMapping(value = "/api/storage/{bucketName}/{*objectKey}")
+    public ResponseEntity<Void> deleteObject(
+            @org.springframework.web.bind.annotation.PathVariable("bucketName") String bucketName, 
+            @org.springframework.web.bind.annotation.PathVariable("objectKey") String objectKey, 
+            @org.springframework.web.bind.annotation.RequestParam(value = "versionId", required = false) Long versionId) {
+        
+        if (objectKey.startsWith("/")) objectKey = objectKey.substring(1);
         authService.requireWriteAccess(getAuthenticatedUser().username(), bucketName);
         if (versionId != null) {
             metadataService.softDeleteSpecificVersion(bucketName, objectKey, versionId);
