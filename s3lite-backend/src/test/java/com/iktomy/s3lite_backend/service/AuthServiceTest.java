@@ -2,14 +2,12 @@ package com.iktomy.s3lite_backend.service;
 
 import com.iktomy.s3lite_backend.model.BucketPermission.PermissionType;
 import com.iktomy.s3lite_backend.model.User;
-import com.iktomy.s3lite_backend.model.Bucket;
 import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
 import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -38,13 +36,13 @@ class AuthServiceTest {
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
 
-    @InjectMocks
     private AuthService authService;
 
     private User user;
 
     @BeforeEach
     void setUp() {
+        authService = new AuthService(userRepository, permissionRepository, bucketRepository, passwordEncoder);
         user = new User();
         user.setId(UUID.randomUUID());
         user.setUsername("alice");

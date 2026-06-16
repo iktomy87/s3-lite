@@ -48,8 +48,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Bucket endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/buckets").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/buckets/**/objects").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/buckets/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/buckets/**").authenticated()
+                        // Storage endpoints
                         .requestMatchers(HttpMethod.PUT, "/api/storage/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/storage/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/storage/**").authenticated()
