@@ -3,9 +3,7 @@ package com.iktomy.s3lite_backend.service;
 import com.iktomy.s3lite_backend.model.BucketPermission.PermissionType;
 import com.iktomy.s3lite_backend.model.User;
 import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
-import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,9 +17,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final BucketPermissionRepository permissionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private BucketRepository bucketRepository;
 
     public AuthService(UserRepository userRepository,
             BucketPermissionRepository permissionRepository,
@@ -62,8 +57,6 @@ public class AuthService {
     }
 
     public void requireReadAccess(String username, String bucketName) {
-        // Owner always has access — check ownership first as a fast-path
-        if (isOwner(username, bucketName)) return;
         boolean hasAccess = permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 username, bucketName, PermissionType.READ);
         if (!hasAccess) {
@@ -73,8 +66,6 @@ public class AuthService {
     }
 
     public void requireWriteAccess(String username, String bucketName) {
-        // Owner always has access — check ownership first as a fast-path
-        if (isOwner(username, bucketName)) return;
         boolean hasAccess = permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 username, bucketName, PermissionType.WRITE);
         if (!hasAccess) {
@@ -84,27 +75,12 @@ public class AuthService {
     }
 
     public boolean hasReadAccess(String username, String bucketName) {
-        return isOwner(username, bucketName) ||
-                permissionRepository.existsByUsernameAndBucketNameAndPermission(
-                        username, bucketName, PermissionType.READ);
+        return permissionRepository.existsByUsernameAndBucketNameAndPermission(
+                username, bucketName, PermissionType.READ);
     }
 
     public boolean hasWriteAccess(String username, String bucketName) {
-        return isOwner(username, bucketName) ||
-                permissionRepository.existsByUsernameAndBucketNameAndPermission(
-                        username, bucketName, PermissionType.WRITE);
-    }
-
-    /**
-     * Returns true if the given username is the owner of the bucket.
-     * This is a safe fallback in case bucket_permissions entries are missing.
-     */
-    private boolean isOwner(String username, String bucketName) {
-        if (bucketRepository == null) return false;
-        return bucketRepository.findByName(bucketName)
-                .map(bucket -> userRepository.findById(bucket.getOwnerId())
-                        .map(user -> user.getUsername().equals(username))
-                        .orElse(false))
-                .orElse(false);
+        return permissionRepository.existsByUsernameAndBucketNameAndPermission(
+                username, bucketName, PermissionType.WRITE);
     }
 }

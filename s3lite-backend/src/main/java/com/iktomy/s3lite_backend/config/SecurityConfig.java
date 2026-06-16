@@ -50,7 +50,6 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // Bucket endpoints
                         .requestMatchers(HttpMethod.GET, "/api/buckets").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/buckets/**/objects").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/buckets/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/buckets/**").authenticated()
                         // Storage endpoints
