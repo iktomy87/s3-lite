@@ -184,17 +184,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Railway CLI
-        run: npm install --global @railway/cli
-        
-      - name: Railway Debug
-        working-directory: ${{ github.workspace }}/s3lite-backend
-        run: |
-          railway --version
-          railway whoami
-          railway status
-        env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        run: npm install --global @railway/cli      
           
       - name: Deploy to Railway
         run: railway up --service "s3-lite" --environment production --detach ${{ github.workspace }}/s3lite-backend
