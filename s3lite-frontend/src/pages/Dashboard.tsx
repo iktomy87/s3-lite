@@ -57,6 +57,7 @@ export const Dashboard: React.FC = () => {
         } else {
             fetchObjects();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentBucket]);
 
     const handleCreateBucket = async (name: string) => {

@@ -7,6 +7,7 @@ import com.iktomy.s3lite_backend.model.ObjectVersion;
 import com.iktomy.s3lite_backend.model.User;
 import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.ObjectVersionRepository;
+import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ class BucketServiceTest {
 
     @Mock
     private ObjectVersionRepository versionRepository;
+
+    @Mock
+    private BucketPermissionRepository permissionRepository;
 
     @InjectMocks
     private BucketService bucketService;
