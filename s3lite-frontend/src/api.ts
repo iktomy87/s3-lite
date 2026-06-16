@@ -42,9 +42,14 @@ export const apiClient = async (endpoint: string, options: FetchOptions = {}) =>
     body,
   };
 
-  console.debug(`[API] ${method} ${BASE_URL}${endpoint}`, { hasToken: !!token });
+  // Construct URL safely to prevent SSRF and path injection vulnerabilities
+  const baseUrlWithSlash = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
+  const safeEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const targetUrl = new URL(safeEndpoint, baseUrlWithSlash).toString();
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, config);
+  console.debug(`[API] ${method} ${targetUrl}`, { hasToken: !!token });
+
+  const response = await fetch(targetUrl, config);
 
   console.debug(`[API] ${method} ${endpoint} → ${response.status}`);
 
