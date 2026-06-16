@@ -191,6 +191,7 @@ jobs:
         run: railway up --service "s3-lite" --detach ./s3lite-backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: 🟢 Notify Discord — Deploy Successful
         if: success()
