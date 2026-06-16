@@ -43,7 +43,9 @@ public class BucketController implements BucketsApi {
             String bucketName,
             String prefix,
             Boolean allVersions) {
+        System.out.println("[DEBUG] Reached listObjects for bucket: " + bucketName);
         AuthenticatedUser principal = getAuthenticatedUser();
+        System.out.println("[DEBUG] Authenticated user: " + principal.username());
         authService.requireReadAccess(principal.username(), bucketName);
 
         boolean includeAll = allVersions != null && allVersions;
@@ -55,9 +57,20 @@ public class BucketController implements BucketsApi {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                 .getContext()
                 .getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof AuthenticatedUser au)) {
+        if (auth == null) {
+            System.out.println("[DEBUG] getAuthenticatedUser: auth is NULL");
             throw new org.springframework.web.server.ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Full authentication is required.");
+                    HttpStatus.UNAUTHORIZED, "Full authentication is required. Auth is null.");
+        }
+        if (!auth.isAuthenticated()) {
+            System.out.println("[DEBUG] getAuthenticatedUser: auth is not authenticated");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Full authentication is required. Not authenticated.");
+        }
+        if (!(auth.getPrincipal() instanceof AuthenticatedUser au)) {
+            System.out.println("[DEBUG] getAuthenticatedUser: principal is not AuthenticatedUser, but " + auth.getPrincipal().getClass());
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Full authentication is required. Wrong principal.");
         }
         return au;
     }

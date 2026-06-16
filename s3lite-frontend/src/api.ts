@@ -55,9 +55,10 @@ export const apiClient = async (endpoint: string, options: FetchOptions = {}) =>
 
   if (response.status === 401) {
     console.warn(`[API] 401 on ${endpoint} — clearing token and redirecting to login`);
+    /*
     removeAuthToken();
     removeUsername();
-    window.location.href = '/login';
+    window.location.href = '/login'; */
     throw new Error('Session expired. Please log in again.');
   }
 
