@@ -54,11 +54,8 @@ export const apiClient = async (endpoint: string, options: FetchOptions = {}) =>
   console.debug(`[API] ${method} ${endpoint} → ${response.status}`);
 
   if (response.status === 401) {
-    console.warn(`[API] 401 on ${endpoint} — clearing token and redirecting to login`);
-    removeAuthToken();
-    removeUsername();
-    window.location.href = '/login';
-    throw new Error('Session expired. Please log in again.');
+    console.warn(`[API] 401 on ${endpoint} — keeping token for debugging`);
+    throw new Error('Unauthorized (401) - Check backend logs.');
   }
 
   if (response.status === 403) {
