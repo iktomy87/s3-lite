@@ -45,9 +45,9 @@ export const apiClient = async (endpoint: string, options: FetchOptions = {}) =>
   // Construct URL safely to prevent SSRF and path injection vulnerabilities
   const baseUrlWithSlash = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
   const safeEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const targetUrl = new URL(safeEndpoint, baseUrlWithSlash).toString();
+  const targetUrl = new URL(safeEndpoint, baseUrlWithSlash);
 
-  console.debug(`[API] ${method} ${targetUrl}`, { hasToken: !!token });
+  console.debug(`[API] ${method} ${targetUrl.toString()}`, { hasToken: !!token });
 
   const response = await fetch(targetUrl, config);
 

@@ -86,7 +86,9 @@ export const Dashboard: React.FC = () => {
             const token = getAuthToken();
             const encodedBucket = encodeURIComponent(currentBucket);
             const encodedKey = objectKey.split('/').map(encodeURIComponent).join('/');
-            const res = await fetch(`${BASE_URL}/storage/${encodedBucket}/${encodedKey}`, {
+            const baseUrlWithSlash = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
+            const targetUrl = new URL(`storage/${encodedBucket}/${encodedKey}`, baseUrlWithSlash);
+            const res = await fetch(targetUrl, {
                 method: 'PUT',
                 body: file,
                 headers: {
@@ -182,7 +184,9 @@ export const Dashboard: React.FC = () => {
                             const token = getAuthToken();
                             const encodedBucket = encodeURIComponent(currentBucket);
                             const encodedKey = key.split('/').map(encodeURIComponent).join('/');
-                            fetch(`${BASE_URL}/storage/${encodedBucket}/${encodedKey}`, {
+                            const baseUrlWithSlash = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
+                            const targetUrl = new URL(`storage/${encodedBucket}/${encodedKey}`, baseUrlWithSlash);
+                            fetch(targetUrl, {
                                 headers: {
                                     ...(token ? { Authorization: `Bearer ${token}` } : {})
                                 }
