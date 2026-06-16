@@ -187,7 +187,8 @@ jobs:
         run: npm install --global @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service "s3-lite" --detach --source
+        working-directory: 
+        run: railway up --service "s3-lite" --detach --source ./s3lite-backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
