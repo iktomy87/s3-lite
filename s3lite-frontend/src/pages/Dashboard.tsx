@@ -98,11 +98,10 @@ export const Dashboard: React.FC = () => {
             });
 
             if (res.status === 401) {
-                /*
-               removeAuthToken();
-               removeUsername();
-               window.location.href = '/login'; */
-                console.log('401 recibido', await res.clone().json().catch(() => 'sin body'));
+                console.warn('401 recibido en upload — clearing token');
+                removeAuthToken();
+                removeUsername();
+                navigate('/login');
                 return;
             }
             if (!res.ok) {
