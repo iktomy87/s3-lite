@@ -5,6 +5,7 @@ import com.iktomy.s3lite_backend.model.User;
 import com.iktomy.s3lite_backend.repository.BucketPermissionRepository;
 import com.iktomy.s3lite_backend.repository.BucketRepository;
 import com.iktomy.s3lite_backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,16 +18,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final BucketPermissionRepository permissionRepository;
-    private final BucketRepository bucketRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BucketRepository bucketRepository;
 
     public AuthService(UserRepository userRepository,
             BucketPermissionRepository permissionRepository,
-            BucketRepository bucketRepository,
             BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.permissionRepository = permissionRepository;
-        this.bucketRepository = bucketRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
