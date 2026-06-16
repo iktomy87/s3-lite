@@ -5,6 +5,7 @@ import { Topbar } from '../components/Dashboard/Topbar';
 import { FileList } from '../components/Dashboard/FileList';
 import { BucketsTable } from '../components/Dashboard/BucketsTable';
 import { DetailPanel } from '../components/Dashboard/DetailPanel';
+import { ObjectsTable } from '../components/Dashboard/ObjectsTable';
 import { BucketModal } from '../components/Dashboard/BucketModal';
 import { UploadModal } from '../components/Dashboard/UploadModal';
 import { DeleteModal } from '../components/Dashboard/DeleteModal';
@@ -17,6 +18,7 @@ export const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'versions'>('activity');
     const [currentBucket, setCurrentBucket] = useState('');
     const [buckets, setBuckets] = useState<any[]>([]);
+    const [objects, setObjects] = useState<any[]>([]);
 
     // Modals state
     const [isCreateBucketOpen, setIsCreateBucketOpen] = useState(false);
@@ -36,9 +38,24 @@ export const Dashboard: React.FC = () => {
         }
     };
 
+    const fetchObjects = async () => {
+        if (!currentBucket) return;
+        try {
+            const data = await apiClient(`/buckets/${currentBucket}/objects`);
+            if (data && data.objects && Array.isArray(data.objects)) {
+                setObjects(data.objects);
+            }
+        } catch (err) {
+            console.error("Failed to fetch objects", err);
+        }
+    };
+
     useEffect(() => {
         if (!currentBucket) {
             fetchBuckets();
+            setObjects([]);
+        } else {
+            fetchObjects();
         }
     }, [currentBucket]);
 
@@ -66,7 +83,9 @@ export const Dashboard: React.FC = () => {
             // Use raw fetch to guarantee Content-Type: application/octet-stream
             // (apiClient's File detection can be overridden by the browser's file MIME type)
             const token = getAuthToken();
-            const res = await fetch(`${BASE_URL}/storage/${currentBucket}/${objectKey}`, {
+            const encodedBucket = encodeURIComponent(currentBucket);
+            const encodedKey = objectKey.split('/').map(encodeURIComponent).join('/');
+            const res = await fetch(`${BASE_URL}/storage/${encodedBucket}/${encodedKey}`, {
                 method: 'PUT',
                 body: file,
                 headers: {
@@ -90,7 +109,7 @@ export const Dashboard: React.FC = () => {
             }
             setIsUploadOpen(false);
             setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Success', message: 'File uploaded successfully!', type: 'success' }]);
-            fetchBuckets();
+            fetchObjects();
         } catch (err: any) {
             setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: err.message, type: 'error' }]);
         }
@@ -122,7 +141,7 @@ export const Dashboard: React.FC = () => {
             onFiles={() => setCurrentBucket('')}
             onActivities={() => console.log('Activities clicked')}
             onSearch={(q) => console.log('Search', q)}
-            onRefresh={() => currentBucket ? console.log("refresh objects") : fetchBuckets()}
+            onRefresh={() => currentBucket ? fetchObjects() : fetchBuckets()}
             onUpload={() => setIsUploadOpen(true)}
             onCreateBucket={() => setIsCreateBucketOpen(true)}
             showUpload={!!currentBucket}
@@ -146,11 +165,58 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {currentBucket ? (
-                <FileList
-                    onAllVersions={() => { }}
-                    onFilter={() => { }}
-                    onRefresh={() => { }}
-                />
+                <>
+                    <FileList
+                        onAllVersions={() => { }}
+                        onFilter={() => { }}
+                        onRefresh={() => fetchObjects()}
+                    />
+                    <ObjectsTable 
+                        objects={objects} 
+                        onObjectClick={(key) => {
+                            // TODO: Show detail panel for object
+                            setIsDetailOpen(true);
+                        }}
+                        onObjectDownload={(key) => {
+                            const token = getAuthToken();
+                            const encodedBucket = encodeURIComponent(currentBucket);
+                            const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+                            fetch(`${BASE_URL}/storage/${encodedBucket}/${encodedKey}`, {
+                                headers: {
+                                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                                }
+                            })
+                            .then(res => {
+                                if (!res.ok) throw new Error("Failed to download");
+                                return res.blob();
+                            })
+                            .then(blob => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = key.split('/').pop() || key;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                                window.URL.revokeObjectURL(url);
+                            })
+                            .catch(err => {
+                                setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: 'Failed to download object', type: 'error' }]);
+                            });
+                        }}
+                        onObjectDelete={async (key) => {
+                            try {
+                                const encodedBucket = encodeURIComponent(currentBucket);
+                                const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+                                await apiClient(`/storage/${encodedBucket}/${encodedKey}`, { method: 'DELETE' });
+                                setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Success', message: 'Object deleted successfully!', type: 'success' }]);
+                                fetchObjects();
+                            } catch (err: any) {
+                                setToasts(prev => [...prev, { id: Date.now().toString(), title: 'Error', message: err.message, type: 'error' }]);
+                            }
+                        }}
+                    />
+                </>
             ) : (
                 <BucketsTable buckets={buckets} onBucketClick={(name) => setCurrentBucket(name)} />
             )}
