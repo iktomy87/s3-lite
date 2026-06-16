@@ -112,6 +112,6 @@ class AuthServiceTest {
         when(permissionRepository.existsByUsernameAndBucketNameAndPermission(
                 "alice", "my-bucket", PermissionType.WRITE)).thenReturn(true);
 
-        authService.requireWriteAccess(\"alice\", \"my-bucket\");
+        authService.requireWriteAccess("alice", "my-bucket");
     }
 }

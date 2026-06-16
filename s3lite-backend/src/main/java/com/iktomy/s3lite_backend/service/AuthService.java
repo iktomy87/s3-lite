@@ -100,6 +100,7 @@ public class AuthService {
      * This is a safe fallback in case bucket_permissions entries are missing.
      */
     private boolean isOwner(String username, String bucketName) {
+        if (bucketRepository == null) return false;
         return bucketRepository.findByName(bucketName)
                 .map(bucket -> userRepository.findById(bucket.getOwnerId())
                         .map(user -> user.getUsername().equals(username))
