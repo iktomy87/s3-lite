@@ -64,10 +64,9 @@ public class BucketService {
                 .toList();
     }
 
-    public ObjectListResponse listObjects(int bucketName, String prefix, boolean allVersions) {
+    public ObjectListResponse listObjects(String bucketName, String prefix, boolean allVersions) {
         if (!bucketRepository.existsByName(bucketName)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Bucket '" + bucketName + "' not found.");
+            throw new ResponseStatusException(HttpStatus.FOUND);
         }
 
         List<ObjectVersion> versions = allVersions
